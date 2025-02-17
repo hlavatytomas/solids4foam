@@ -160,6 +160,37 @@ public:
             virtual void setDeltaT(Time& runTime)
             {}
 
+            virtual dynamicFvMesh& mesh()
+            {
+                return mesh();
+            }
+
+            virtual volVectorField& U()
+            {
+                return U();
+            }
+
+            virtual volVectorField& D()
+            {
+                return D();
+            }
+
+            virtual volVectorField& DD()
+            {
+                return DD();
+            }
+
+
+            virtual volTensorField& gradD()
+            {
+                return gradD();
+            }
+
+            virtual volSymmTensorField& sigma()
+            {
+                return sigma();
+            }
+
             //- Evolve the mathematical model
             virtual bool evolve() = 0;
 

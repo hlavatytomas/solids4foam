@@ -42,6 +42,8 @@ tutorials/fluidSolidInteraction-preCICE/tutorials
 *.jar
 *.dylib
 
+.vscode
+
 # derived files
 lex.yy.c
 
