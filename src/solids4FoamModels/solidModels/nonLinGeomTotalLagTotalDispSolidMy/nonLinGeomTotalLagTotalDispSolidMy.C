@@ -212,6 +212,12 @@ bool nonLinGeomTotalLagTotalDispSolidMy::evolve()
         // volScalarField deltaP = pG;
 
         // Info << "min deltaP " << min(deltaP).value() << " max deltaP in DEqn " << max(deltaP).value() <<endl;
+        // Info << "max(impKf_) " << max(impKf_) << "min(impKf_)" << min(impKf_) << endl;
+        // Info << "max(Finv_) " << max(Finv_) << "min(Finv_)" << min(Finv_) << endl;
+        // Info << "max(g()) " << max(g()) << "min(g())" << min(g()) << endl;
+        // Info << "max(rho()) " << max(rho()) << "min(rho())" << min(rho()) << endl;
+        // Info << "max(J_) " << max(J_) << "min(J_)" << min(J_) << "\n" << endl;
+        // Info << "max(D()) " << max(D()) << "min(D())" << min(D()) << endl;
 
 
         // Store fields for under-relaxation and residual calculation

@@ -675,6 +675,9 @@ void Foam::viscoNeoHookeanElastic::correct(volSymmTensorField& sigma)
         K_*(1.0/(beta_.value()*J))*(1 - pow(J, -beta_.value()))
     );
 
+    // volScalarField pG = mesh().lookupObject<volScalarField>("pG");
+    // volScalarField pressure = pG - dimensionedScalar("dummyP", dimPressure, 1e5);
+
     sigma += J*pressure*I + gRelax*sigma;
 
     forAll(H_, MaxwellModelI)
@@ -852,6 +855,9 @@ void Foam::viscoNeoHookeanElastic::correct(surfaceSymmTensorField& sigma)
     (
         K_*(1.0/(beta_.value()*J))*(1 - pow(J, -beta_.value()))
     );
+
+    // volScalarField pG = mesh().lookupObject<volScalarField>("pG");
+    // surfaceScalarField pressure = fvc::interpolate(pG - dimensionedScalar("dummyP", dimPressure, 1e5));
 
     sigma += J*pressure*I + gRelax*sigma;
 
