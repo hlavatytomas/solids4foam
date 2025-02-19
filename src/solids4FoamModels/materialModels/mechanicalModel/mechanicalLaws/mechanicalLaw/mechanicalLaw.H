@@ -528,10 +528,11 @@ public:
         //- Return bulk modulus
         virtual tmp<volScalarField> bulkModulus() const
         {
-            notImplemented("bulkModulus() const");
+            // notImplemented("bulkModulus() const");
 
-            // Keep compiler happy
-            return rho();
+            // // Keep compiler happy
+            // return rho();
+            return impK();
         }
 
         //- Calculate the volField stress
