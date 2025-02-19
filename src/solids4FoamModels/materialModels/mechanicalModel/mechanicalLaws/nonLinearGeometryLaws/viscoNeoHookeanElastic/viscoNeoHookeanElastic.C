@@ -644,30 +644,41 @@ void Foam::viscoNeoHookeanElastic::correct(volSymmTensorField& sigma)
 
     const scalar deltaT = mesh().time().deltaTValue();
 
+    volScalarField T = mesh().lookupObject<volScalarField>("T") / dimensionedScalar("dummyT", dimTemperature, 1) - 276;
+    // volScalarField tauMoje = (9 * (2 / 3.14 * Foam::atan((T - 65) / 2) + 1) + 2);
+    volScalarField tauMoje = (tau_[0] * (2 / 3.14 * Foam::atan((T - 65) / 2) + 1) + 2);
+
     forAll(H_, MaxwellModelI)
     {
+        // H_[MaxwellModelI] =
+        //     Foam::exp(-deltaT/tau_[MaxwellModelI])*h_[MaxwellModelI].oldTime()
+        //   - Foam::exp(-deltaT/(2.0*tau_[MaxwellModelI]))*s_.oldTime();
         H_[MaxwellModelI] =
-            Foam::exp(-deltaT/tau_[MaxwellModelI])*h_[MaxwellModelI].oldTime()
-          - Foam::exp(-deltaT/(2.0*tau_[MaxwellModelI]))*s_.oldTime();
+          Foam::exp(-deltaT/tauMoje)*h_[MaxwellModelI].oldTime()
+        - Foam::exp(-deltaT/(2.0*tauMoje))*s_.oldTime();
     }
 
     forAll(h_, MaxwellModelI)
     {
+        // h_[MaxwellModelI] =
+        //     H_[MaxwellModelI]
+        //   + Foam::exp(-deltaT/(2.0*tau_[MaxwellModelI]))*s_;
         h_[MaxwellModelI] =
-            H_[MaxwellModelI]
-          + Foam::exp(-deltaT/(2.0*tau_[MaxwellModelI]))*s_;
+          H_[MaxwellModelI]
+        + Foam::exp(-deltaT/(2.0*tauMoje))*s_;
     }
 
     // Calculate the current total stress, where the volumetric term is
     // elastic and the deviatoric term is viscoelastic
+    // scalar gRelax = gammaInf_;
+    volScalarField gRelax = gammaInf_ + gamma_[0]*Foam::exp(-deltaT/(2*tauMoje));
 
-    scalar gRelax = gammaInf_;
 
-    forAll(gamma_,MaxwellModelI)
-    {
-        gRelax +=
-            gamma_[MaxwellModelI]*Foam::exp(-deltaT/(2*tau_[MaxwellModelI]));
-    }
+    // forAll(gamma_,MaxwellModelI)
+    // {
+    //     gRelax +=
+    //         gamma_[MaxwellModelI]*Foam::exp(-deltaT/(2*tau_[MaxwellModelI]));
+    // }
 
     // Calculate hydrostatic pressure, defined in (G. A. HOLZAPFEL,1996)
     const volScalarField pressure
@@ -825,30 +836,41 @@ void Foam::viscoNeoHookeanElastic::correct(surfaceSymmTensorField& sigma)
 
     const scalar deltaT = mesh().time().deltaTValue();
 
+    volScalarField T = mesh().lookupObject<volScalarField>("T") / dimensionedScalar("dummyT", dimTemperature, 1) - 276;
+    // volScalarField tauMoje = (9 * (2 / 3.14 * Foam::atan((T - 65) / 2) + 1) + 2);
+    volScalarField tauMoje = (tau_[0] * (2 / 3.14 * Foam::atan((T - 65) / 2) + 1) + 2);
+
     forAll(Hf_, MaxwellModelI)
     {
-        Hf_[MaxwellModelI] =
-            Foam::exp(-deltaT/tau_[MaxwellModelI])*hf_[MaxwellModelI].oldTime()
-          - Foam::exp(-deltaT/(2.0*tau_[MaxwellModelI]))*sf_.oldTime();
+        // Hf_[MaxwellModelI] =
+        //     Foam::exp(-deltaT/tau_[MaxwellModelI])*hf_[MaxwellModelI].oldTime()
+        //   - Foam::exp(-deltaT/(2.0*tau_[MaxwellModelI]))*sf_.oldTime();
+        H_[MaxwellModelI] =
+          Foam::exp(-deltaT/tauMoje)*h_[MaxwellModelI].oldTime()
+        - Foam::exp(-deltaT/(2.0*tauMoje))*s_.oldTime();
     }
 
     forAll(hf_, MaxwellModelI)
     {
-        hf_[MaxwellModelI] =
-            Hf_[MaxwellModelI]
-          + Foam::exp(-deltaT/(2.0*tau_[MaxwellModelI]))*sf_;
+        // hf_[MaxwellModelI] =
+        //     Hf_[MaxwellModelI]
+        //   + Foam::exp(-deltaT/(2.0*tau_[MaxwellModelI]))*sf_;
+        h_[MaxwellModelI] =
+          H_[MaxwellModelI]
+        + Foam::exp(-deltaT/(2.0*tauMoje))*s_;
     }
 
     // Calculate the current total stress, where the volumetric term is
     // elastic and the deviatoric term is viscoelastic
 
-    scalar gRelax = gammaInf_;
+    // scalar gRelax = gammaInf_;
+    volScalarField gRelax = gammaInf_ + gamma_[0]*Foam::exp(-deltaT/(2*tauMoje));
 
-    forAll(gamma_, MaxwellModelI)
-    {
-        gRelax +=
-            gamma_[MaxwellModelI]*Foam::exp(-deltaT/(2*tau_[MaxwellModelI]));
-    }
+    // forAll(gamma_, MaxwellModelI)
+    // {
+    //     gRelax +=
+    //         gamma_[MaxwellModelI]*Foam::exp(-deltaT/(2*tau_[MaxwellModelI]));
+    // }
 
     // Calculate hydrostatic pressure, defined in (G. A. HOLZAPFEL,1996)
     const surfaceScalarField pressure
@@ -859,7 +881,7 @@ void Foam::viscoNeoHookeanElastic::correct(surfaceSymmTensorField& sigma)
     // volScalarField pG = mesh().lookupObject<volScalarField>("pG");
     // surfaceScalarField pressure = fvc::interpolate(pG - dimensionedScalar("dummyP", dimPressure, 1e5));
 
-    sigma += J*pressure*I + gRelax*sigma;
+    sigma += J*pressure*I + fvc::interpolate(gRelax)*sigma;
 
     forAll(Hf_, MaxwellModelI)
     {

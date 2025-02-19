@@ -203,8 +203,8 @@ bool nonLinGeomTotalLagTotalDispSolidMy::evolve()
 
 
 
-        volScalarField alphaF = mesh().lookupObject<volScalarField>("alphaF");
-        volScalarField phiL = mesh().lookupObject<volScalarField>("phiL");
+        // volScalarField alphaF = mesh().lookupObject<volScalarField>("alphaF");
+        // volScalarField phiL = mesh().lookupObject<volScalarField>("phiL");
 
 
         // volScalarField rho = 0 * dimensionedScalar("rhoL", dimMass / dimVolume, 1000) * alphaF * phiL + dimensionedScalar("rhoS", dimMass / dimVolume, 700) * (1 - alphaF);

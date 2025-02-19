@@ -324,13 +324,15 @@ bool thermalLinGeomSolid::evolve()
 
         // Under-relaxation the linear system
         DEqn.relax();
+        Info << "Tu9" <<endl;
 
         // Enforce any cell displacements
         solidModel::setCellDisps(DEqn);
 
+        Info << "Tu10" <<endl;
         // Solve the linear system
         solverPerfD = DEqn.solve();
-
+        Info << "Tu11" <<endl;
         // Under-relax the field
         relaxField(D(), iCorr);
 
@@ -349,13 +351,15 @@ bool thermalLinGeomSolid::evolve()
         // Calculate the stress using run-time selectable mechanical law
         mechanical().correct(sigma());
 
+        Info << "Tu12" <<endl;
+
         // Update impKf to improve convergence
         // Note: impK and rImpK are not updated as they are used for traction
         // boundaries
-        if (iCorr % 10 == 0)
-        {
-            impKf_ = mechanical().impKf();
-        }
+        // if (iCorr % 10 == 0)
+        // {
+        //     impKf_ = mechanical().impKf();
+        // }
     }
     while
     (

@@ -952,8 +952,11 @@ Foam::linearElasticMisesPlastic::materialTangentField() const
 
 void Foam::linearElasticMisesPlastic::correct(volSymmTensorField& sigma)
 {
+    Info << "Tu1" <<endl;
     // Calculate total strain
     updateEpsilon();
+
+    Info << "Tu2" <<endl;
 
     // Calculate deviatoric strain
     const volSymmTensorField e(dev(epsilon()));
@@ -993,7 +996,7 @@ void Foam::linearElasticMisesPlastic::correct(volSymmTensorField& sigma)
     const scalarField& sigmaYOldI = sigmaY_.oldTime().internalField();
     const scalarField& epsilonPEqOldI = epsilonPEq_.oldTime().internalField();
 #endif
-
+    Info << "Tu3" <<endl;
     forAll(fTrialI, cellI)
     {
         // Update plasticN, DLambda, DSigmaY and sigmaY for this cell
@@ -1011,6 +1014,7 @@ void Foam::linearElasticMisesPlastic::correct(volSymmTensorField& sigma)
             maxMagBE
         );
     }
+    Info << "Tu4" <<endl;
 
     forAll(fTrial.boundaryField(), patchI)
     {
@@ -1051,12 +1055,14 @@ void Foam::linearElasticMisesPlastic::correct(volSymmTensorField& sigma)
             );
         }
     }
+    Info << "Tu5" <<endl;
 
     // Update DEpsilonPEq
     DEpsilonPEq_ = sqrtTwoOverThree_*DLambda_;
 
     // Store previous iteration for residual calculation
     DEpsilonP_.storePrevIter();
+    Info << "Tu6" <<endl;
 
     // Update DEpsilonP
     DEpsilonP_ = DLambda_*plasticN_;
@@ -1071,7 +1077,9 @@ void Foam::linearElasticMisesPlastic::correct(volSymmTensorField& sigma)
     const volSymmTensorField s(sTrial - 2*mu_*DEpsilonP_);
 
     // Update hydrostatic stress
+    Info << "Tu7" <<endl;
     updateSigmaHyd(K_*tr(epsilon()), (4.0/3.0)*mu_ + K_);
+    Info << "Tu8" <<endl;
 
     // Update the stress
     sigma = sigmaHyd()*I + s;

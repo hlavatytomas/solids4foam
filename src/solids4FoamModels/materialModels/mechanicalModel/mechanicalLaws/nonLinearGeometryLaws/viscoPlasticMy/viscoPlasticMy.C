@@ -1015,7 +1015,7 @@ void Foam::viscoPlastic::correct(volSymmTensorField& sigma)
     const volSymmTensorField sTrial(mu_*dev(bEbarTrial_));
 
     const volScalarField Ibar(tr(bEbarTrial_)/3.0);
-    const volScalarField muBar(Ibar*mu_);
+    // const volScalarField muBar(Ibar*mu_);
 
     // Check for plastic loading
     // and calculate increment of plastic equivalent strain
@@ -1025,177 +1025,32 @@ void Foam::viscoPlastic::correct(volSymmTensorField& sigma)
     // residual in the solver
     DEpsilonP_.storePrevIter();
 
-    // Normalise residual in Newton method with respect to mag(bE)
-#ifdef OPENFOAM_NOT_EXTEND
-    const scalar maxMagBE = max(gMax(mag(bEbarTrial_.primitiveField())), SMALL);
-#else
-    const scalar maxMagBE = max(gMax(mag(bEbarTrial_.internalField())), SMALL);
-#endif
-
-    // Trial yield function
-    // sigmaY is the Cauchy yield stress so we scale it by J
-    const volScalarField fTrial(mag(sTrial) - sqrtTwoOverThree_*J()*sigmaY_);
-
-    // Magnitude of hardening slope
-    const scalar magHp = mag(Hp_);
-
-    // Take references to the internal fields for efficiency
-#ifdef OPENFOAM_NOT_EXTEND
-    const scalarField& fTrialI = fTrial.primitiveField();
-    const symmTensorField& sTrialI = sTrial.primitiveField();
-    symmTensorField& plasticNI = plasticN_.primitiveFieldRef();
-    scalarField& DSigmaYI = DSigmaY_.primitiveFieldRef();
-    scalarField& DLambdaI = DLambda_.primitiveFieldRef();
-    const scalarField& muBarI = muBar.primitiveField();
-    const scalarField& JI = J().primitiveField();
-    const scalarField& sigmaYI = sigmaY_.primitiveField();
-    const scalarField& epsilonPEqOldI = epsilonPEq_.oldTime().primitiveField();
-#else
-    const scalarField& fTrialI = fTrial.internalField();
-    const symmTensorField& sTrialI = sTrial.internalField();
-    symmTensorField& plasticNI = plasticN_.internalField();
-    scalarField& DSigmaYI = DSigmaY_.internalField();
-    scalarField& DLambdaI = DLambda_.internalField();
-    const scalarField& muBarI = muBar.internalField();
-    const scalarField& JI = J().internalField();
-    const scalarField& sigmaYI = sigmaY_.internalField();
-    const scalarField& epsilonPEqOldI = epsilonPEq_.oldTime().internalField();
-#endif
-
-    // Calculate DLambda_ and plasticN_
-    forAll(fTrialI, cellI)
-    {
-        // Calculate return direction plasticN
-        const scalar magS = mag(sTrialI[cellI]);
-        if (magS > SMALL)
-        {
-            plasticNI[cellI] = sTrialI[cellI]/magS;
-        }
-
-        // Calculate DLambda/DEpsilonPEq
-        if (fTrialI[cellI] < SMALL)
-        {
-            // elastic
-            DSigmaYI[cellI] = 0.0;
-            DLambdaI[cellI] = 0.0;
-        }
-        else
-        {
-            if (nonLinearPlasticity_)
-            {
-                // Total equivalent plastic strain where t is start of time-step
-                scalar curSigmaY = 0.0; // updated in loop below
-
-                // Calculates DEpsilonPEq using Newtons's method
-                newtonLoop
-                (
-                    DLambdaI[cellI],
-                    curSigmaY,
-                    epsilonPEqOldI[cellI],
-                    magS,
-                    muBarI[cellI],
-                    JI[cellI],
-                    maxMagBE
-                );
-
-                // Update increment of yield stress
-                DSigmaYI[cellI] = curSigmaY - sigmaYI[cellI];
-            }
-            else
-            {
-                // Plastic modulus is linear
-                DLambdaI[cellI] = fTrialI[cellI]/(2*muBarI[cellI]);
-
-                if (magHp > SMALL)
-                {
-                    DLambdaI[cellI] /= 1.0 + Hp_/(3*muBarI[cellI]);
-
-                    // Update increment of yield stress
-                    DSigmaYI[cellI] = sqrtTwoOverThree_*DLambdaI[cellI]*Hp_;
-                }
-            }
-        }
-    }
-
-    forAll(fTrial.boundaryField(), patchI)
-    {
-        // Take references to the boundary patch fields for efficiency
-        const scalarField& fTrialP = fTrial.boundaryField()[patchI];
-        const symmTensorField& sTrialP = sTrial.boundaryField()[patchI];
-#ifdef OPENFOAM_NOT_EXTEND
-        symmTensorField& plasticNP = plasticN_.boundaryFieldRef()[patchI];
-        scalarField& DSigmaYP = DSigmaY_.boundaryFieldRef()[patchI];
-        scalarField& DLambdaP = DLambda_.boundaryFieldRef()[patchI];
-#else
-        symmTensorField& plasticNP = plasticN_.boundaryField()[patchI];
-        scalarField& DSigmaYP = DSigmaY_.boundaryField()[patchI];
-        scalarField& DLambdaP = DLambda_.boundaryField()[patchI];
-#endif
-        const scalarField& muBarP = muBar.boundaryField()[patchI];
-        const scalarField& JP = J().boundaryField()[patchI];
-        const scalarField& sigmaYP = sigmaY_.boundaryField()[patchI];
-        const scalarField& epsilonPEqOldP =
-            epsilonPEq_.oldTime().boundaryField()[patchI];
-
-        forAll(fTrialP, faceI)
-        {
-            // Calculate direction plasticN
-            const scalar magS = mag(sTrialP[faceI]);
-            if (magS > SMALL)
-            {
-                plasticNP[faceI] = sTrialP[faceI]/magS;
-            }
-
-            // Calculate DEpsilonPEq
-            if (fTrialP[faceI] < SMALL)
-            {
-                // elasticity
-                DSigmaYP[faceI] = 0.0;
-                DLambdaP[faceI] = 0.0;
-            }
-            else
-            {
-                // yielding
-                if (nonLinearPlasticity_)
-                {
-                    scalar curSigmaY = 0.0; // updated in loop below
-
-                    // Calculate DEpsilonPEq and curSigmaY
-                    newtonLoop
-                    (
-                        DLambdaP[faceI],
-                        curSigmaY,
-                        epsilonPEqOldP[faceI],
-                        magS,
-                        muBarP[faceI],
-                        JP[faceI],
-                        maxMagBE
-                    );
-
-                    // Update increment of yield stress
-                    DSigmaYP[faceI] = curSigmaY - sigmaYP[faceI];
-                }
-                else
-                {
-                    // Plastic modulus is linear
-                    DLambdaP[faceI] = fTrialP[faceI]/(2.0*muBarP[faceI]);
-
-                    if (magHp > SMALL)
-                    {
-                        DLambdaP[faceI] /= 1.0 + Hp_/(3.0*muBarP[faceI]);
-
-                        // Update increment of yield stress
-                        DSigmaYP[faceI] = sqrtTwoOverThree_*DLambdaP[faceI]*Hp_;
-                    }
-                }
-            }
-        }
-    }
+    // prepare DEpsilon
+    const Time& time = mesh().time();
+    scalar dTimeSc = time.deltaTValue();
+    dimensionedScalar dTime("dTime", dimTime, dTimeSc);
+    volScalarField T = mesh().lookupObject<volScalarField>("T") / dimensionedScalar("dummyT", dimTemperature, 1) - 276;
+    volScalarField tau = (9 * (2 / 3.14 * Foam::atan((T - 65) / 2) + 1) + 2) * dimensionedScalar("dummyTime", dimTime, 1);
+    // dimensionedScalar tau("tau", dimTime, 2);
+    dimensionedScalar E("E", dimPressure, 10000);
+    volSymmTensorField D0 = J() * sigma;
 
     // Update DEpsilonP and DEpsilonPEq
-    DEpsilonPEq_ = sqrtTwoOverThree_*DLambda_;
-    DEpsilonP_ = Ibar*DLambda_*plasticN_;
-    DEpsilonP_.relax();
+    DEpsilonP_ = 1 / E / tau * D0 * dTime;
+    DEpsilonP_.correctBoundaryConditions();
+
+    // prepare DSigmaEq
+    DEpsilonPEq_ = sqrt(2.0/3.0 * (DEpsilonP_ && DEpsilonP_));
+    forAll(DSigmaY_, cellI)
+    {
+        scalar curSigmaY =
+            curYieldStress
+            (
+                epsilonPEq_[cellI] + DEpsilonPEq_[cellI],  J()[cellI]
+            )/J()[cellI];
+        DSigmaY_[cellI] = curSigmaY - sigmaY_[cellI];
+    }
+    DSigmaY_.correctBoundaryConditions();
 
     // Calculate deviatoric stress
     const volSymmTensorField s(sTrial - 2*mu_*DEpsilonP_);
@@ -1260,190 +1115,29 @@ void Foam::viscoPlastic::correct(surfaceSymmTensorField& sigma)
     // residual in the solver
     DEpsilonPf_.storePrevIter();
 
-    // Normalise residual in Newton method with respect to mag(bE)
-#ifdef OPENFOAM_NOT_EXTEND
-    const scalar maxMagBE = max(gMax(mag(bEbarTrialf_.primitiveField())), SMALL);
-#else
-    const scalar maxMagBE = max(gMax(mag(bEbarTrialf_.internalField())), SMALL);
-#endif
-
-    // Trial yield function
-    // sigmaY is the Cauchy yield stress so we scale it by J
-    const surfaceScalarField fTrial
-    (
-        mag(sTrial) - sqrtTwoOverThree_*Jf()*sigmaYf_
-    );
-
-    // Magnitude of hardening slope
-    const scalar magHp = mag(Hp_);
-
-    // Take references to the internal fields for efficiency
-#ifdef OPENFOAM_NOT_EXTEND
-    const scalarField& fTrialI = fTrial.primitiveField();
-    const symmTensorField& sTrialI = sTrial.primitiveField();
-    symmTensorField& plasticNI = plasticNf_.primitiveFieldRef();
-    scalarField& DSigmaYI = DSigmaYf_.primitiveFieldRef();
-    scalarField& DLambdaI = DLambdaf_.primitiveFieldRef();
-    const scalarField& muBarI = muBar.primitiveField();
-    const scalarField& JI = Jf().primitiveField();
-    const scalarField& sigmaYI = sigmaYf_.primitiveField();
-    const scalarField& epsilonPEqOldI = epsilonPEqf_.oldTime().primitiveField();
-#else
-    const scalarField& fTrialI = fTrial.internalField();
-    const symmTensorField& sTrialI = sTrial.internalField();
-    symmTensorField& plasticNI = plasticNf_.internalField();
-    scalarField& DSigmaYI = DSigmaYf_.internalField();
-    scalarField& DLambdaI = DLambdaf_.internalField();
-    const scalarField& muBarI = muBar.internalField();
-    const scalarField& JI = Jf().internalField();
-    const scalarField& sigmaYI = sigmaYf_.internalField();
-    const scalarField& epsilonPEqOldI = epsilonPEqf_.oldTime().internalField();
-#endif
-
-    // Calculate DLambdaf_ and plasticNf_
-    forAll(fTrialI, faceI)
-    {
-        // Calculate return direction plasticN
-        const scalar magS = mag(sTrialI[faceI]);
-        if (magS > SMALL)
-        {
-            plasticNI[faceI] = sTrialI[faceI]/magS;
-        }
-
-        // Calculate DLambda/DEpsilonPEq
-        if (fTrialI[faceI] < SMALL)
-        {
-            // elastic
-            DSigmaYI[faceI] = 0.0;
-            DLambdaI[faceI] = 0.0;
-        }
-        else
-        {
-            if (nonLinearPlasticity_)
-            {
-                // Total equivalent plastic strain where t is start of time-step
-                scalar curSigmaY = 0.0; // updated in loop below
-
-                // Calculates DEpsilonPEq using Newtons's method
-                newtonLoop
-                (
-                    DLambdaI[faceI],
-                    curSigmaY,
-                    epsilonPEqOldI[faceI],
-                    magS,
-                    muBarI[faceI],
-                    JI[faceI],
-                    maxMagBE
-                );
-
-                // Update increment of yield stress
-                DSigmaYI[faceI] = curSigmaY - sigmaYI[faceI];
-            }
-            else
-            {
-                // Plastic modulus is linear
-                DLambdaI[faceI] = fTrialI[faceI]/(2*muBarI[faceI]);
-
-                if (magHp > SMALL)
-                {
-                    DLambdaI[faceI] /= 1.0 + Hp_/(3*muBarI[faceI]);
-
-                    // Update increment of yield stress
-                    DSigmaYI[faceI] = sqrtTwoOverThree_*DLambdaI[faceI]*Hp_;
-                }
-            }
-        }
-    }
-
-    forAll(fTrial.boundaryField(), patchI)
-    {
-        // Calculate on coupled for surface fields
-        //if (!fTrial.boundaryField()[patchI].coupled())
-        {
-            // Take references to the boundary patch fields for efficiency
-            const scalarField& fTrialP = fTrial.boundaryField()[patchI];
-            const symmTensorField& sTrialP = sTrial.boundaryField()[patchI];
-#ifdef OPENFOAM_NOT_EXTEND
-            symmTensorField& plasticNP = plasticNf_.boundaryFieldRef()[patchI];
-            scalarField& DSigmaYP = DSigmaYf_.boundaryFieldRef()[patchI];
-            scalarField& DLambdaP = DLambdaf_.boundaryFieldRef()[patchI];
-#else
-            symmTensorField& plasticNP = plasticNf_.boundaryField()[patchI];
-            scalarField& DSigmaYP = DSigmaYf_.boundaryField()[patchI];
-            scalarField& DLambdaP = DLambdaf_.boundaryField()[patchI];
-#endif
-            const scalarField& muBarP = muBar.boundaryField()[patchI];
-            const scalarField& JP = Jf().boundaryField()[patchI];
-            const scalarField& sigmaYP = sigmaYf_.boundaryField()[patchI];
-            const scalarField& epsilonPEqOldP =
-                epsilonPEq_.oldTime().boundaryField()[patchI];
-
-            forAll(fTrialP, faceI)
-            {
-                // Calculate direction plasticN
-                const scalar magS = mag(sTrialP[faceI]);
-                if (magS > SMALL)
-                {
-                    plasticNP[faceI] = sTrialP[faceI]/magS;
-                }
-
-                // Calculate DEpsilonPEq
-                if (fTrialP[faceI] < SMALL)
-                {
-                    // elasticity
-                    DSigmaYP[faceI] = 0.0;
-                    DLambdaP[faceI] = 0.0;
-                }
-                else
-                {
-                    // yielding
-                    if (nonLinearPlasticity_)
-                    {
-                        scalar curSigmaY = 0.0; // updated in loop below
-
-                        // Calculate DEpsilonPEq and curSigmaY
-                        newtonLoop
-                        (
-                            DLambdaP[faceI],
-                            curSigmaY,
-                            epsilonPEqOldP[faceI],
-                            magS,
-                            muBarP[faceI],
-                            JP[faceI],
-                            maxMagBE
-                        );
-
-                        // Update increment of yield stress
-                        DSigmaYP[faceI] = curSigmaY - sigmaYP[faceI];
-                    }
-                    else
-                    {
-                        // Plastic modulus is linear
-                        DLambdaP[faceI] = fTrialP[faceI]/(2.0*muBarP[faceI]);
-
-                        if (magHp > SMALL)
-                        {
-                            DLambdaP[faceI] /= 1.0 + Hp_/(3.0*muBarP[faceI]);
-
-                            // Update increment of yield stress
-                            DSigmaYP[faceI] = sqrtTwoOverThree_*DLambdaP[faceI]*Hp_;
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-#ifndef OPENFOAM_NOT_EXTEND
-    DSigmaYf_.correctBoundaryConditions();
-    DLambdaf_.correctBoundaryConditions();
-    plasticNf_.correctBoundaryConditions();
-#endif
+    const Time& time = mesh().time();
+    scalar dTimeSc = time.deltaTValue();
+    dimensionedScalar dTime("dTime", dimTime, dTimeSc);
+    volScalarField T = mesh().lookupObject<volScalarField>("T") / dimensionedScalar("dummyT", dimTemperature, 1) - 276;
+    volScalarField tau = (9 * (2 / 3.14 * Foam::atan((T - 65) / 2) + 1) + 2) * dimensionedScalar("dummyTime", dimTime, 1);
+    dimensionedScalar E("E", dimPressure, 10000);
+    surfaceSymmTensorField D0f = Jf() * sigma;
 
     // Update DEpsilonP and DEpsilonPEq
-    DEpsilonPEqf_ = sqrtTwoOverThree_*DLambdaf_;
-    DEpsilonPf_ = Ibar*DLambdaf_*plasticNf_;
-    DEpsilonPf_.relax();
+    DEpsilonPf_ = 1 / E / fvc::interpolate(tau) * D0f * dTime;
+    DEpsilonPf_.correctBoundaryConditions();
+
+    DEpsilonPEqf_ = sqrt(2.0/3.0 * (DEpsilonPf_ && DEpsilonPf_));
+    forAll(DSigmaYf_, faceI)
+    {
+        scalar curSigmaY =
+            curYieldStress
+            (
+                epsilonPEqf_[faceI] + DEpsilonPEqf_[faceI],  Jf()[faceI]
+            )/Jf()[faceI];
+        DSigmaYf_[faceI] = curSigmaY - sigmaYf_[faceI];
+    }
+    DSigmaYf_.correctBoundaryConditions();
 
     // Calculate deviatoric stress
     const surfaceSymmTensorField s(sTrial - 2*mu_*DEpsilonPf_);
