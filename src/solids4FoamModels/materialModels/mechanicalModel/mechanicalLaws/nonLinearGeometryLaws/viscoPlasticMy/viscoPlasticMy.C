@@ -1033,10 +1033,23 @@ void Foam::viscoPlastic::correct(volSymmTensorField& sigma)
     volScalarField tau = (9 * (2 / 3.14 * Foam::atan((T - 65) / 2) + 1) + 2) * dimensionedScalar("dummyTime", dimTime, 1);
     // dimensionedScalar tau("tau", dimTime, 2);
     dimensionedScalar E("E", dimPressure, 10000);
-    volSymmTensorField D0 = J() * sigma;
+    dimensionedScalar nu("nu", dimless, 0.2);
+    // volTensorField F = mesh().lookupObject<volTensorField>("F");
+    // volTensorField invF = inv(F);
+    // volTensorField S = J() * invF & sigma & invF.T();
+    // volSymmTensorField D0 = J() * sigma;
+    // volSymmTensorField D0 = sigma;
+    // volSymmTensorField D0 = 0 * sigma;
+    // D0.replace(symmTensor::XX, S.component(tensor::XX) - nu * S.component(tensor::YY) - nu * S.component(tensor::ZZ));
+    // D0.replace(symmTensor::XY, (2 * nu + 2) * S.component(tensor::XY));
+    // D0.replace(symmTensor::XZ, (2 * nu + 2) * S.component(tensor::XZ));
+    // D0.replace(symmTensor::YY, - nu * S.component(tensor::XX) + S.component(tensor::YY) - nu * S.component(tensor::ZZ));
+    // D0.replace(symmTensor::YZ, (2 * nu + 2) * S.component(tensor::YZ));
+    // D0.replace(symmTensor::ZZ, - nu * S.component(tensor::XX) - nu * S.component(tensor::YY) + S.component(tensor::ZZ));
 
     // Update DEpsilonP and DEpsilonPEq
-    DEpsilonP_ = 1 / E / tau * D0 * dTime;
+    // DEpsilonP_ = 1 / E / tau * D0 * dTime;
+    DEpsilonP_ = 1 / E / tau * sigma * dTime;
     DEpsilonP_.correctBoundaryConditions();
 
     // prepare DSigmaEq
@@ -1121,10 +1134,10 @@ void Foam::viscoPlastic::correct(surfaceSymmTensorField& sigma)
     volScalarField T = mesh().lookupObject<volScalarField>("T") / dimensionedScalar("dummyT", dimTemperature, 1) - 276;
     volScalarField tau = (9 * (2 / 3.14 * Foam::atan((T - 65) / 2) + 1) + 2) * dimensionedScalar("dummyTime", dimTime, 1);
     dimensionedScalar E("E", dimPressure, 10000);
-    surfaceSymmTensorField D0f = Jf() * sigma;
+    // surfaceSymmTensorField D0f = Jf() * sigma;
 
     // Update DEpsilonP and DEpsilonPEq
-    DEpsilonPf_ = 1 / E / fvc::interpolate(tau) * D0f * dTime;
+    DEpsilonPf_ = 1 / E / fvc::interpolate(tau) * sigma * dTime;
     DEpsilonPf_.correctBoundaryConditions();
 
     DEpsilonPEqf_ = sqrt(2.0/3.0 * (DEpsilonPf_ && DEpsilonPf_));

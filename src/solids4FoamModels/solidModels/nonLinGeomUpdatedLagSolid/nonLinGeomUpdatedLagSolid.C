@@ -178,6 +178,12 @@ bool nonLinGeomUpdatedLagSolid::evolve()
         // Store fields for under-relaxation and residual calculation
         DD().storePrevIter();
 
+        volScalarField pG = mesh().lookupObject<volScalarField>("pG");
+
+        // volScalarField deltaP = pG - min(pG);
+        // volScalarField deltaP = pG - (min(pG) + max(pG)) / 2;
+        volScalarField deltaP = pG - dimensionedScalar("dummyP", dimPressure, 1e5);
+
         // Momentum equation incremental updated Lagrangian form
         fvVectorMatrix DDEqn
         (
@@ -187,6 +193,7 @@ bool nonLinGeomUpdatedLagSolid::evolve()
           - fvc::laplacian(impKf_, DD(), "laplacian(DDD,DD)")
           + fvc::div(relJ_*relFinv_ & sigma(), "div(sigma)")
           + rho_*g()
+          - fvc::div(relJ_*relFinv_ & deltaP*symmTensor(I))
           + stabilisation().stabilisation(DD(), gradDD(), impK_)
         );
 

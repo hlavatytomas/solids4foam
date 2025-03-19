@@ -185,6 +185,20 @@ public:
             {
                 return gradD();
             }
+            virtual volTensorField& gradDD()
+            {
+                return gradDD();
+            }
+
+            virtual volTensorField& F()
+            {
+                return F();
+            }
+
+            virtual volScalarField& J()
+            {
+                return J();
+            }
 
             virtual volSymmTensorField& sigma()
             {
