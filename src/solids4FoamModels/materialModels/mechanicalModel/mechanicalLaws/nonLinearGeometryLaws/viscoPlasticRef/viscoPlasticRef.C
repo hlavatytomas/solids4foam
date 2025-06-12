@@ -17,7 +17,7 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "viscoPlasticMy.H"
+#include "viscoPlasticRef.H"
 #include "addToRunTimeSelectionTable.H"
 #include "transformGeometricField.H"
 #include "logVolFields.H"
@@ -29,36 +29,36 @@ License
 
 namespace Foam
 {
-    defineTypeNameAndDebug(viscoPlastic, 0);
+    defineTypeNameAndDebug(viscoPlasticRef, 0);
     addToRunTimeSelectionTable
     (
-        mechanicalLaw, viscoPlastic, nonLinGeomMechLaw
+        mechanicalLaw, viscoPlasticRef, nonLinGeomMechLaw
     );
 
 // * * * * * * * * * * * * * * Static Members  * * * * * * * * * * * * * * * //
 
     // Tolerance for Newton loop
-    scalar viscoPlastic::LoopTol_ = 1e-8;
+    scalar viscoPlasticRef::LoopTol_ = 1e-8;
 
     // Maximum number of iterations for Newton loop
-    label viscoPlastic::MaxNewtonIter_ = 200;
+    label viscoPlasticRef::MaxNewtonIter_ = 200;
 
     // finiteDiff is the delta for finite difference differentiation
-    scalar viscoPlastic::finiteDiff_ = 0.25e-6;
+    scalar viscoPlasticRef::finiteDiff_ = 0.25e-6;
 
     // Store sqrt(2/3) as we use it often
-    scalar viscoPlastic::sqrtTwoOverThree_ = ::sqrt(2.0/3.0);
+    scalar viscoPlasticRef::sqrtTwoOverThree_ = ::sqrt(2.0/3.0);
 
 } // End of namespace Foam
 
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
-void Foam::viscoPlastic::makeJ()
+void Foam::viscoPlasticRef::makeJ()
 {
     if (JPtr_.valid())
     {
-        FatalErrorIn("void Foam::viscoPlastic::makeJ()")
+        FatalErrorIn("void Foam::viscoPlasticRef::makeJ()")
             << "pointer already set" << abort(FatalError);
     }
 
@@ -84,7 +84,7 @@ void Foam::viscoPlastic::makeJ()
 }
 
 
-Foam::volScalarField& Foam::viscoPlastic::J()
+Foam::volScalarField& Foam::viscoPlasticRef::J()
 {
     if (JPtr_.empty())
     {
@@ -95,11 +95,11 @@ Foam::volScalarField& Foam::viscoPlastic::J()
 }
 
 
-void Foam::viscoPlastic::makeJf()
+void Foam::viscoPlasticRef::makeJf()
 {
     if (JfPtr_.valid())
     {
-        FatalErrorIn("void Foam::viscoPlastic::makeJf()")
+        FatalErrorIn("void Foam::viscoPlasticRef::makeJf()")
             << "pointer already set" << abort(FatalError);
     }
 
@@ -125,7 +125,7 @@ void Foam::viscoPlastic::makeJf()
 }
 
 
-Foam::surfaceScalarField& Foam::viscoPlastic::Jf()
+Foam::surfaceScalarField& Foam::viscoPlasticRef::Jf()
 {
     if (JfPtr_.empty())
     {
@@ -136,7 +136,7 @@ Foam::surfaceScalarField& Foam::viscoPlastic::Jf()
 }
 
 
-Foam::scalar Foam::viscoPlastic::curYieldStress
+Foam::scalar Foam::viscoPlasticRef::curYieldStress
 (
     const scalar curEpsilonPEq,    // Current equivalent plastic strain
     const scalar J                 // Current Jacobian
@@ -150,7 +150,7 @@ Foam::scalar Foam::viscoPlastic::curYieldStress
 }
 
 
-Foam::scalar Foam::viscoPlastic::yieldFunction
+Foam::scalar Foam::viscoPlasticRef::yieldFunction
 (
     const scalar epsilonPEqOld,    // Old equivalent plastic strain
     const scalar magSTrial,        // Deviatoric trial stress magnitude
@@ -183,7 +183,7 @@ Foam::scalar Foam::viscoPlastic::yieldFunction
 }
 
 
-void Foam::viscoPlastic::newtonLoop
+void Foam::viscoPlasticRef::newtonLoop
 (
     scalar& DLambda,               // Plastic multiplier
     scalar& curSigmaY,             // Current yield stress
@@ -230,7 +230,7 @@ void Foam::viscoPlastic::newtonLoop
 
         if (i == MaxNewtonIter_)
         {
-            WarningIn("viscoPlastic::newtonLoop()")
+            WarningIn("viscoPlasticRef::newtonLoop()")
                 << "Plasticity Newton loop not converging" << endl;
         }
     }
@@ -247,7 +247,7 @@ void Foam::viscoPlastic::newtonLoop
 }
 
 
-Foam::tmp<Foam::volScalarField> Foam::viscoPlastic::Ibar
+Foam::tmp<Foam::volScalarField> Foam::viscoPlasticRef::Ibar
 (
     const volSymmTensorField& devBEbar
 )
@@ -259,7 +259,7 @@ Foam::tmp<Foam::volScalarField> Foam::viscoPlastic::Ibar
     // A method of calculating Ibar to enforce det(bEbar) == 1 is proposed
     // by solving a cubic equation.
     // Rubin and Attia, CALCULATION OF HYPERELASTIC RESPONSE OF FINITELY
-    // DEFORMED ELASTIC-VISCOPLASTIC MATERIALS, INTERNATIONAL JOURNAL FOR
+    // DEFORMED ELASTIC-viscoPlasticRef MATERIALS, INTERNATIONAL JOURNAL FOR
     // NUMERICAL METHODS IN ENGINEERING, VOL. 39,309-320(1996)
     // and
     // M. Hollenstein M. Jabareen M. B. Rubin, Modeling a smooth elastic-
@@ -395,7 +395,7 @@ Foam::tmp<Foam::volScalarField> Foam::viscoPlastic::Ibar
 }
 
 
-Foam::tmp<Foam::surfaceScalarField> Foam::viscoPlastic::Ibar
+Foam::tmp<Foam::surfaceScalarField> Foam::viscoPlasticRef::Ibar
 (
     const surfaceSymmTensorField& devBEbar
 )
@@ -407,7 +407,7 @@ Foam::tmp<Foam::surfaceScalarField> Foam::viscoPlastic::Ibar
     // A method of calculating Ibar to enforce det(bEbar) == 1 is proposed
     // by solving a cubic equation.
     // Rubin and Attia, CALCULATION OF HYPERELASTIC RESPONSE OF FINITELY
-    // DEFORMED ELASTIC-VISCOPLASTIC MATERIALS, INTERNATIONAL JOURNAL FOR
+    // DEFORMED ELASTIC-viscoPlasticRef MATERIALS, INTERNATIONAL JOURNAL FOR
     // NUMERICAL METHODS IN ENGINEERING, VOL. 39,309-320(1996)
     // and
     // M. Hollenstein M. Jabareen M. B. Rubin, Modeling a smooth elastic-
@@ -549,7 +549,7 @@ Foam::tmp<Foam::surfaceScalarField> Foam::viscoPlastic::Ibar
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 // Construct from dictionary
-Foam::viscoPlastic::viscoPlastic
+Foam::viscoPlasticRef::viscoPlasticRef
 (
     const word& name,
     const fvMesh& mesh,
@@ -898,7 +898,7 @@ Foam::viscoPlastic::viscoPlastic
     {
         FatalErrorIn
         (
-            "viscoPlastic::viscoPlastic::()"
+            "viscoPlasticRef::viscoPlasticRef::()"
         )   << "Either E and nu or mu and K elastic parameters should be "
             << "specified" << abort(FatalError);
     }
@@ -940,14 +940,14 @@ Foam::viscoPlastic::viscoPlastic
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::viscoPlastic::~viscoPlastic()
+Foam::viscoPlasticRef::~viscoPlasticRef()
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 Foam::tmp<Foam::volScalarField>
-Foam::viscoPlastic::impK() const
+Foam::viscoPlasticRef::impK() const
 {
     // Calculate scaling factor to ensure optimal convergence
     // This is similar to the tangent matrix in FE procedures
@@ -988,7 +988,7 @@ Foam::viscoPlastic::impK() const
 }
 
 
-void Foam::viscoPlastic::correct(volSymmTensorField& sigma)
+void Foam::viscoPlasticRef::correct(volSymmTensorField& sigma)
 {
     // Update the deformation gradient field
     // Note: if true is returned, it means that linearised elasticity was
@@ -1002,19 +1002,19 @@ void Foam::viscoPlastic::correct(volSymmTensorField& sigma)
     J() = det(F());
 
     // Calculate the relative Jacobian
-    // const volScalarField relJ(J()/J().oldTime());
+    const volScalarField relJ(J()/J().oldTime());
 
     // Calculate the relative deformation gradient with the volumetric term
     // removed
-    // const volTensorField relFbar(pow(relJ, -1.0/3.0)*relF());
+    const volTensorField relFbar(pow(relJ, -1.0/3.0)*relF());
 
     // Update bE trial
-    // bEbarTrial_ = transform(relFbar, bEbar_.oldTime());
+    bEbarTrial_ = transform(relFbar, bEbar_.oldTime());
 
     // Calculate trial deviatoric stress
-    // const volSymmTensorField sTrial(mu_*dev(bEbarTrial_));
+    const volSymmTensorField sTrial(mu_*dev(bEbarTrial_));
 
-    // const volScalarField Ibar(tr(bEbarTrial_)/3.0);
+    const volScalarField Ibar(tr(bEbarTrial_)/3.0);
     // const volScalarField muBar(Ibar*mu_);
 
     // Check for plastic loading
@@ -1029,32 +1029,14 @@ void Foam::viscoPlastic::correct(volSymmTensorField& sigma)
     const Time& time = mesh().time();
     scalar dTimeSc = time.deltaTValue();
     dimensionedScalar dTime("dTime", dimTime, dTimeSc);
-    volScalarField T = mesh().lookupObject<volScalarField>("T") / dimensionedScalar("dummyT", dimTemperature, 1) - 276;
-    volScalarField alphaS = mesh().lookupObject<volScalarField>("alphaS");
-    volScalarField alphaL = mesh().lookupObject<volScalarField>("alphaL");
+    // volScalarField T = mesh().lookupObject<volScalarField>("T") / dimensionedScalar("dummyT", dimTemperature, 1) - 276;
     // dimensionedScalar T ("temp", dimless, 27);
-    volScalarField alphaG = 1 - alphaL - alphaS;
-
-    // volScalarField tau = (9 * (2 / 3.14 * Foam::atan((T - 65) / 2) + 1) + 2) * dimensionedScalar("dummyTime", dimTime, 1) * (- Foam::atan(4e4 * alphaG - 4e3) / 1e-3 + 1571.75);
-    volScalarField tau = (9 * (2 / 3.14 * Foam::atan((T - 65) / 2) + 1) + 2) * dimensionedScalar("dummyTime", dimTime, 1) * (- Foam::atan(1e3 * alphaG - 1e2) / 0.05 + 32.36);
-    // volScalarField tau = (9 * (2 / 3.14 * Foam::atan((T - 65) / 2) + 1) + 2) * dimensionedScalar("dummyTime", dimTime, 1) ;
-    // forAll(tau, cellI)
-    // {
-    //     if (alphaG[cellI] < 0.1)
-    //     {
-    //         tau[cellI] = tau[cellI] * (- Foam::atan(5e6 * alphaG[cellI] - 5e5) / 1e-3 + 1571.8);
-    //     }
-    // }
-
-
+    // volScalarField tau = (9 * (2 / 3.14 * Foam::atan((T - 65) / 2) + 1) + 2) * dimensionedScalar("dummyTime", dimTime, 1);
     // dimensionedScalar tau = (9 * (2 / 3.14 * Foam::atan((T - 65) / 2) + 1) + 2) * dimensionedScalar("dummyTime", dimTime, 1);
-    // dimensionedScalar tau = dimensionedScalar("dummyTime", dimTime, 2);
+    dimensionedScalar tau = dimensionedScalar("dummyTime", dimTime, 2);
     dimensionedScalar E = 9 * mu_ * K_ / (3 * K_ + mu_);
     dimensionedScalar nu = 0.5 * (3 * K_ - 2 * mu_) / (3 * K_ + mu_);
     dimensionedScalar predMatice = 1 / ((1 + nu) * (1 - 2 * nu));
-
-    // volScalarField Epokus = E * (- Foam::atan(1e3 * alphaG - 1e2) / 0.5 + 32.36); 
-    // volScalarField Epokus = E * (- Foam::atan(1e3 * alphaG - 1e2) / 0.5 + 4.14); 
     // volTensorField F = mesh().lookupObject<volTensorField>("F");
     // volTensorField invF = inv(F);
     // volTensorField S = J() * invF & sigma & invF.T();
@@ -1081,22 +1063,14 @@ void Foam::viscoPlastic::correct(volSymmTensorField& sigma)
 
     // Update DEpsilonP and DEpsilonPEq
     DEpsilonP_ = 1 / E / tau * D0 * dTime;
-    // DEpsilonP_ = 1 / Epokus / tau * D0 * dTime;
     // DEpsilonP_ = 1 / E / tau * sigma * dTime;
     DEpsilonP_.correctBoundaryConditions();
 
-    // const volTensorField& gradDD = mesh().lookupObject<volTensorField>("grad(DD)");
-
-    volVectorField D = mesh().lookupObject<volVectorField>("D");
-
-    volVectorField DD = D - D.oldTime();
-
-    volTensorField gradDD = fvc::grad(DD);
+    const volTensorField& gradDD = mesh().lookupObject<volTensorField>("grad(DD)");
 
     
     volSymmTensorField dEpsilon = symm(gradDD);
 
-    // volSymmTensorField dSigma = Epokus * dEpsilon;
     volSymmTensorField dSigma = E * dEpsilon;
 
     dSigma.replace(symmTensor::XX, E * predMatice * ((1 - nu) * dEpsilon.component(symmTensor::XX) + (nu) * dEpsilon.component(symmTensor::YY) + (nu) * dEpsilon.component(symmTensor::ZZ)));
@@ -1107,7 +1081,6 @@ void Foam::viscoPlastic::correct(volSymmTensorField& sigma)
     dSigma.replace(symmTensor::ZZ, E * predMatice * ((nu) * dEpsilon.component(symmTensor::XX) + (nu) * dEpsilon.component(symmTensor::YY) + (1 - nu) * dEpsilon.component(symmTensor::ZZ)));
 
 
-    // volSymmTensorField dSigmaP = Epokus * DEpsilonP_;
     volSymmTensorField dSigmaP = E * DEpsilonP_;
 
     dSigmaP.replace(symmTensor::XX, E * predMatice * ((1 - nu) * DEpsilonP_.component(symmTensor::XX) + (nu) * DEpsilonP_.component(symmTensor::YY) + (nu) * DEpsilonP_.component(symmTensor::ZZ)));
@@ -1159,9 +1132,8 @@ void Foam::viscoPlastic::correct(volSymmTensorField& sigma)
 }
 
 
-void Foam::viscoPlastic::correct(surfaceSymmTensorField& sigma)
+void Foam::viscoPlasticRef::correct(surfaceSymmTensorField& sigma)
 {
-    Info << "Pozor surfaceField" <<endl;
     // Update the deformation gradient field
     // Note: if true is returned, it means that linearised elasticity was
     // enforced by the solver via the enforceLinear switch
@@ -1173,6 +1145,28 @@ void Foam::viscoPlastic::correct(surfaceSymmTensorField& sigma)
     // Update the Jacobian of the total deformation gradient
     Jf() = det(Ff());
 
+    // Calculate the relative Jacobian
+    const surfaceScalarField relJ(Jf()/Jf().oldTime());
+
+    // Calculate the relative deformation gradient with the volumetric term
+    // removed
+    const surfaceTensorField relFbar(pow(relJ, -1.0/3.0)*relFf());
+
+    // Update bE trial
+    bEbarTrialf_ = transform(relFbar, bEbarf_.oldTime());
+
+    // Calculate trial deviatoric stress
+    const surfaceSymmTensorField sTrial(mu_*dev(bEbarTrialf_));
+
+    const surfaceScalarField Ibar(tr(bEbarTrialf_)/3.0);
+    const surfaceScalarField muBar(Ibar*mu_);
+
+    // Check for plastic loading
+    // and calculate increment of plastic equivalent strain
+    // i.e. the plastic multiplier
+
+    // Store previous iteration for under-relaxation and calculation of plastic
+    // residual in the solver
 
     DEpsilonPf_.storePrevIter();
 
@@ -1180,11 +1174,11 @@ void Foam::viscoPlastic::correct(surfaceSymmTensorField& sigma)
     const Time& time = mesh().time();
     scalar dTimeSc = time.deltaTValue();
     dimensionedScalar dTime("dTime", dimTime, dTimeSc);
-    volScalarField T = mesh().lookupObject<volScalarField>("T") / dimensionedScalar("dummyT", dimTemperature, 1) - 276;
+    // volScalarField T = mesh().lookupObject<volScalarField>("T") / dimensionedScalar("dummyT", dimTemperature, 1) - 276;
     // dimensionedScalar T ("temp", dimless, 27);
-    volScalarField tau = (9 * (2 / 3.14 * Foam::atan((T - 65) / 2) + 1) + 2) * dimensionedScalar("dummyTime", dimTime, 1);
+    // volScalarField tau = (9 * (2 / 3.14 * Foam::atan((T - 65) / 2) + 1) + 2) * dimensionedScalar("dummyTime", dimTime, 1);
     // dimensionedScalar tau = (9 * (2 / 3.14 * Foam::atan((T - 65) / 2) + 1) + 2) * dimensionedScalar("dummyTime", dimTime, 1);
-    // dimensionedScalar tau = dimensionedScalar("dummyTime", dimTime, 2);
+    dimensionedScalar tau = dimensionedScalar("dummyTime", dimTime, 2);
     dimensionedScalar E = 9 * mu_ * K_ / (3 * K_ + mu_);
     dimensionedScalar nu = 0.5 * (3 * K_ - 2 * mu_) / (3 * K_ + mu_);
     dimensionedScalar predMatice = 1 / ((1 + nu) * (1 - 2 * nu));
@@ -1207,178 +1201,86 @@ void Foam::viscoPlastic::correct(surfaceSymmTensorField& sigma)
     D0.replace(symmTensor::YZ, (2 * nu + 2) * sigma.component(symmTensor::YZ));
     D0.replace(symmTensor::ZZ, - nu * sigma.component(symmTensor::XX) - nu * sigma.component(symmTensor::YY) + sigma.component(symmTensor::ZZ));
 
-    // Info << "E = " << E << endl;
-    // Info << "tau = " << tau << endl;
-    // Info << "nu = " << nu << endl;
-    // Info << "dTime = " << dTime << endl; 
-
     // Update DEpsilonP and DEpsilonPEq
-    DEpsilonPf_ = 1 / E / fvc::interpolate(tau) * D0 * dTime;
+    // DEpsilonPf_ = 1 / E / fvc::interpolate(tau) * D0 * dTime;
+    DEpsilonPf_ = 1 / E / tau * D0 * dTime;
     // DEpsilonP_ = 1 / E / tau * sigma * dTime;
     DEpsilonPf_.correctBoundaryConditions();
 
-    const volTensorField& gradDD = mesh().lookupObject<volTensorField>("grad(DD)");
+    // const volTensorField& gradDD = mesh().lookupObject<volTensorField>("grad(DD)");
 
     
-    surfaceSymmTensorField dEpsilonf = symm(fvc::interpolate(gradDD));
+    // surfaceSymmTensorField dEpsilon = fvc::interpolate(symm(gradDD));
 
-    surfaceSymmTensorField dSigmaf = E * dEpsilonf;
+    // surfaceSymmTensorField dSigma = E * dEpsilon;
 
-    dSigmaf.replace(symmTensor::XX, E * predMatice * ((1 - nu) * dEpsilonf.component(symmTensor::XX) + (nu) * dEpsilonf.component(symmTensor::YY) + (nu) * dEpsilonf.component(symmTensor::ZZ)));
-    dSigmaf.replace(symmTensor::XY, E * predMatice * (1 - 2 * nu) / 2 * dEpsilonf.component(symmTensor::XY));
-    dSigmaf.replace(symmTensor::XZ, E * predMatice * (1 - 2 * nu) / 2 * dEpsilonf.component(symmTensor::XZ));
-    dSigmaf.replace(symmTensor::YY, E * predMatice * ((nu) * dEpsilonf.component(symmTensor::XX) + (1 - nu) * dEpsilonf.component(symmTensor::YY) + (nu) * dEpsilonf.component(symmTensor::ZZ)));
-    dSigmaf.replace(symmTensor::YZ, E * predMatice * (1 - 2 * nu) / 2 * dEpsilonf.component(symmTensor::YZ));
-    dSigmaf.replace(symmTensor::ZZ, E * predMatice * ((nu) * dEpsilonf.component(symmTensor::XX) + (nu) * dEpsilonf.component(symmTensor::YY) + (1 - nu) * dEpsilonf.component(symmTensor::ZZ)));
+    // dSigma.replace(symmTensor::XX, E * predMatice * ((1 - nu) * dEpsilon.component(symmTensor::XX) + (nu) * dEpsilon.component(symmTensor::YY) + (nu) * dEpsilon.component(symmTensor::ZZ)));
+    // dSigma.replace(symmTensor::XY, E * predMatice * (1 - 2 * nu) / 2 * dEpsilon.component(symmTensor::XY));
+    // dSigma.replace(symmTensor::XZ, E * predMatice * (1 - 2 * nu) / 2 * dEpsilon.component(symmTensor::XZ));
+    // dSigma.replace(symmTensor::YY, E * predMatice * ((nu) * dEpsilon.component(symmTensor::XX) + (1 - nu) * dEpsilon.component(symmTensor::YY) + (nu) * dEpsilon.component(symmTensor::ZZ)));
+    // dSigma.replace(symmTensor::YZ, E * predMatice * (1 - 2 * nu) / 2 * dEpsilon.component(symmTensor::YZ));
+    // dSigma.replace(symmTensor::ZZ, E * predMatice * ((nu) * dEpsilon.component(symmTensor::XX) + (nu) * dEpsilon.component(symmTensor::YY) + (1 - nu) * dEpsilon.component(symmTensor::ZZ)));
 
 
-    surfaceSymmTensorField dSigmaPf = E * DEpsilonPf_;
+    // surfaceSymmTensorField dSigmaP = E * DEpsilonPf_;
 
-    dSigmaPf.replace(symmTensor::XX, E * predMatice * ((1 - nu) * DEpsilonPf_.component(symmTensor::XX) + (nu) * DEpsilonPf_.component(symmTensor::YY) + (nu) * DEpsilonPf_.component(symmTensor::ZZ)));
-    dSigmaPf.replace(symmTensor::XY, E * predMatice * (1 - 2 * nu) / 2 * DEpsilonPf_.component(symmTensor::XY));
-    dSigmaPf.replace(symmTensor::XZ, E * predMatice * (1 - 2 * nu) / 2 * DEpsilonPf_.component(symmTensor::XZ));
-    dSigmaPf.replace(symmTensor::YY, E * predMatice * ((nu) * DEpsilonPf_.component(symmTensor::XX) + (1 - nu) * DEpsilonPf_.component(symmTensor::YY) + (nu) * DEpsilonPf_.component(symmTensor::ZZ)));
-    dSigmaPf.replace(symmTensor::YZ, E * predMatice * (1 - 2 * nu) / 2 * DEpsilonPf_.component(symmTensor::YZ));
-    dSigmaPf.replace(symmTensor::ZZ, E * predMatice * ((nu) * DEpsilonPf_.component(symmTensor::XX) + (nu) * DEpsilonPf_.component(symmTensor::YY) + (1 - nu) * DEpsilonPf_.component(symmTensor::ZZ)));
+    // dSigmaP.replace(symmTensor::XX, E * predMatice * ((1 - nu) * DEpsilonPf_.component(symmTensor::XX) + (nu) * DEpsilonPf_.component(symmTensor::YY) + (nu) * DEpsilonPf_.component(symmTensor::ZZ)));
+    // dSigmaP.replace(symmTensor::XY, E * predMatice * (1 - 2 * nu) / 2 * DEpsilonPf_.component(symmTensor::XY));
+    // dSigmaP.replace(symmTensor::XZ, E * predMatice * (1 - 2 * nu) / 2 * DEpsilonPf_.component(symmTensor::XZ));
+    // dSigmaP.replace(symmTensor::YY, E * predMatice * ((nu) * DEpsilonPf_.component(symmTensor::XX) + (1 - nu) * DEpsilonPf_.component(symmTensor::YY) + (nu) * DEpsilonPf_.component(symmTensor::ZZ)));
+    // dSigmaP.replace(symmTensor::YZ, E * predMatice * (1 - 2 * nu) / 2 * DEpsilonPf_.component(symmTensor::YZ));
+    // dSigmaP.replace(symmTensor::ZZ, E * predMatice * ((nu) * DEpsilonPf_.component(symmTensor::XX) + (nu) * DEpsilonPf_.component(symmTensor::YY) + (1 - nu) * DEpsilonPf_.component(symmTensor::ZZ)));
 
-    sigma = sigma.oldTime() + (dSigmaf - dSigmaPf);
+    // sigma = sigma.oldTime() + (dSigma - dSigmaP);
 
-    // // Calculate the relative Jacobian
-    // const surfaceScalarField relJ(Jf()/Jf().oldTime());
-
-    // // Calculate the relative deformation gradient with the volumetric term
-    // // removed
-    // // const surfaceTensorField relFbar(pow(relJ, -1.0/3.0)*relFf());
-
-    // // // Update bE trial
-    // // bEbarTrialf_ = transform(relFbar, bEbarf_.oldTime());
-
-    // // // Calculate trial deviatoric stress
-    // // const surfaceSymmTensorField sTrial(mu_*dev(bEbarTrialf_));
-
-    // // const surfaceScalarField Ibar(tr(bEbarTrialf_)/3.0);
-    // // const surfaceScalarField muBar(Ibar*mu_);
-
-    // // Check for plastic loading
-    // // and calculate increment of plastic equivalent strain
-    // // i.e. the plastic multiplier
-
-    // // Store previous iteration for under-relaxation and calculation of plastic
-    // // residual in the solver
 
     // DEpsilonPf_.storePrevIter();
 
-    // // prepare DEpsilon
     // const Time& time = mesh().time();
     // scalar dTimeSc = time.deltaTValue();
     // dimensionedScalar dTime("dTime", dimTime, dTimeSc);
     // volScalarField T = mesh().lookupObject<volScalarField>("T") / dimensionedScalar("dummyT", dimTemperature, 1) - 276;
-    // // dimensionedScalar T ("temp", dimless, 27);
     // volScalarField tau = (9 * (2 / 3.14 * Foam::atan((T - 65) / 2) + 1) + 2) * dimensionedScalar("dummyTime", dimTime, 1);
-    // // dimensionedScalar tau = (9 * (2 / 3.14 * Foam::atan((T - 65) / 2) + 1) + 2) * dimensionedScalar("dummyTime", dimTime, 1);
-    // // dimensionedScalar tau = dimensionedScalar("dummyTime", dimTime, 2);
     // dimensionedScalar E = 9 * mu_ * K_ / (3 * K_ + mu_);
-    // dimensionedScalar nu = 0.5 * (3 * K_ - 2 * mu_) / (3 * K_ + mu_);
-    // dimensionedScalar predMatice = 1 / ((1 + nu) * (1 - 2 * nu));
-    // // volTensorField F = mesh().lookupObject<volTensorField>("F");
-    // // volTensorField invF = inv(F);
-    // // volTensorField S = J() * invF & sigma & invF.T();
-    // // volSymmTensorField D0 = J() * sigma;
-    // // volSymmTensorField D0 = sigma;
-    // surfaceSymmTensorField D0 = 0 * sigma;
-    // // D0.replace(symmTensor::XX, S.component(tensor::XX) - nu * S.component(tensor::YY) - nu * S.component(tensor::ZZ));
-    // // D0.replace(symmTensor::XY, (2 * nu + 2) * S.component(tensor::XY));
-    // // D0.replace(symmTensor::XZ, (2 * nu + 2) * S.component(tensor::XZ));
-    // // D0.replace(symmTensor::YY, - nu * S.component(tensor::XX) + S.component(tensor::YY) - nu * S.component(tensor::ZZ));
-    // // D0.replace(symmTensor::YZ, (2 * nu + 2) * S.component(tensor::YZ));
-    // // D0.replace(symmTensor::ZZ, - nu * S.component(tensor::XX) - nu * S.component(tensor::YY) + S.component(tensor::ZZ));
-    // D0.replace(symmTensor::XX, sigma.component(symmTensor::XX) - nu * sigma.component(symmTensor::YY) - nu * sigma.component(symmTensor::ZZ));
-    // D0.replace(symmTensor::XY, (2 * nu + 2) * sigma.component(symmTensor::XY));
-    // D0.replace(symmTensor::XZ, (2 * nu + 2) * sigma.component(symmTensor::XZ));
-    // D0.replace(symmTensor::YY, - nu * sigma.component(symmTensor::XX) + sigma.component(symmTensor::YY) - nu * sigma.component(symmTensor::ZZ));
-    // D0.replace(symmTensor::YZ, (2 * nu + 2) * sigma.component(symmTensor::YZ));
-    // D0.replace(symmTensor::ZZ, - nu * sigma.component(symmTensor::XX) - nu * sigma.component(symmTensor::YY) + sigma.component(symmTensor::ZZ));
+    // surfaceSymmTensorField D0f = Jf() * sigma;
 
-    // // Update DEpsilonP and DEpsilonPEq
-    // DEpsilonPf_ = 1 / E / fvc::interpolate(tau) * D0 * dTime;
-    // // DEpsilonPf_ = 1 / E / tau * D0 * dTime;
-    // // DEpsilonP_ = 1 / E / tau * sigma * dTime;
+    // Update DEpsilonP and DEpsilonPEq
+    // DEpsilonPf_ = 1 / E / fvc::interpolate(tau) * sigma * dTime;
     // DEpsilonPf_.correctBoundaryConditions();
 
-    // // const volTensorField& gradDD = mesh().lookupObject<volTensorField>("grad(DD)");
+    DEpsilonPEqf_ = sqrt(2.0/3.0 * (DEpsilonPf_ && DEpsilonPf_));
+    forAll(DSigmaYf_, faceI)
+    {
+        scalar curSigmaY =
+            curYieldStress
+            (
+                epsilonPEqf_[faceI] + DEpsilonPEqf_[faceI],  Jf()[faceI]
+            )/Jf()[faceI];
+        DSigmaYf_[faceI] = curSigmaY - sigmaYf_[faceI];
+    }
+    DSigmaYf_.correctBoundaryConditions();
 
-    
-    // // surfaceSymmTensorField dEpsilon = fvc::interpolate(symm(gradDD));
+    // Calculate deviatoric stress
+    const surfaceSymmTensorField s(sTrial - 2*mu_*DEpsilonPf_);
 
-    // // surfaceSymmTensorField dSigma = E * dEpsilon;
+    // Update bEbar
+    if (updateBEbarConsistent_)
+    {
+        const surfaceSymmTensorField devBEbar(s/mu_);
+        bEbarf_ = devBEbar + this->Ibar(devBEbar)*I;
+    }
+    else
+    {
+        bEbarf_ = (s/mu_) + Ibar*I;
+    }
 
-    // // dSigma.replace(symmTensor::XX, E * predMatice * ((1 - nu) * dEpsilon.component(symmTensor::XX) + (nu) * dEpsilon.component(symmTensor::YY) + (nu) * dEpsilon.component(symmTensor::ZZ)));
-    // // dSigma.replace(symmTensor::XY, E * predMatice * (1 - 2 * nu) / 2 * dEpsilon.component(symmTensor::XY));
-    // // dSigma.replace(symmTensor::XZ, E * predMatice * (1 - 2 * nu) / 2 * dEpsilon.component(symmTensor::XZ));
-    // // dSigma.replace(symmTensor::YY, E * predMatice * ((nu) * dEpsilon.component(symmTensor::XX) + (1 - nu) * dEpsilon.component(symmTensor::YY) + (nu) * dEpsilon.component(symmTensor::ZZ)));
-    // // dSigma.replace(symmTensor::YZ, E * predMatice * (1 - 2 * nu) / 2 * dEpsilon.component(symmTensor::YZ));
-    // // dSigma.replace(symmTensor::ZZ, E * predMatice * ((nu) * dEpsilon.component(symmTensor::XX) + (nu) * dEpsilon.component(symmTensor::YY) + (1 - nu) * dEpsilon.component(symmTensor::ZZ)));
-
-
-    // // surfaceSymmTensorField dSigmaP = E * DEpsilonPf_;
-
-    // // dSigmaP.replace(symmTensor::XX, E * predMatice * ((1 - nu) * DEpsilonPf_.component(symmTensor::XX) + (nu) * DEpsilonPf_.component(symmTensor::YY) + (nu) * DEpsilonPf_.component(symmTensor::ZZ)));
-    // // dSigmaP.replace(symmTensor::XY, E * predMatice * (1 - 2 * nu) / 2 * DEpsilonPf_.component(symmTensor::XY));
-    // // dSigmaP.replace(symmTensor::XZ, E * predMatice * (1 - 2 * nu) / 2 * DEpsilonPf_.component(symmTensor::XZ));
-    // // dSigmaP.replace(symmTensor::YY, E * predMatice * ((nu) * DEpsilonPf_.component(symmTensor::XX) + (1 - nu) * DEpsilonPf_.component(symmTensor::YY) + (nu) * DEpsilonPf_.component(symmTensor::ZZ)));
-    // // dSigmaP.replace(symmTensor::YZ, E * predMatice * (1 - 2 * nu) / 2 * DEpsilonPf_.component(symmTensor::YZ));
-    // // dSigmaP.replace(symmTensor::ZZ, E * predMatice * ((nu) * DEpsilonPf_.component(symmTensor::XX) + (nu) * DEpsilonPf_.component(symmTensor::YY) + (1 - nu) * DEpsilonPf_.component(symmTensor::ZZ)));
-
-    // // sigma = sigma.oldTime() + (dSigma - dSigmaP);
-
-
-    // // DEpsilonPf_.storePrevIter();
-
-    // // const Time& time = mesh().time();
-    // // scalar dTimeSc = time.deltaTValue();
-    // // dimensionedScalar dTime("dTime", dimTime, dTimeSc);
-    // // volScalarField T = mesh().lookupObject<volScalarField>("T") / dimensionedScalar("dummyT", dimTemperature, 1) - 276;
-    // // volScalarField tau = (9 * (2 / 3.14 * Foam::atan((T - 65) / 2) + 1) + 2) * dimensionedScalar("dummyTime", dimTime, 1);
-    // // dimensionedScalar E = 9 * mu_ * K_ / (3 * K_ + mu_);
-    // // surfaceSymmTensorField D0f = Jf() * sigma;
-
-    // // Update DEpsilonP and DEpsilonPEq
-    // // DEpsilonPf_ = 1 / E / fvc::interpolate(tau) * sigma * dTime;
-    // // DEpsilonPf_.correctBoundaryConditions();
-
-    // DEpsilonPEqf_ = sqrt(2.0/3.0 * (DEpsilonPf_ && DEpsilonPf_));
-    // forAll(DSigmaYf_, faceI)
-    // {
-    //     scalar curSigmaY =
-    //         curYieldStress
-    //         (
-    //             epsilonPEqf_[faceI] + DEpsilonPEqf_[faceI],  Jf()[faceI]
-    //         )/Jf()[faceI];
-    //     DSigmaYf_[faceI] = curSigmaY - sigmaYf_[faceI];
-    // }
-    // DSigmaYf_.correctBoundaryConditions();
-
-    // // Calculate deviatoric stress
-    // const surfaceSymmTensorField s(sTrial - 2*mu_*DEpsilonPf_);
-
-    // // Update bEbar
-    // if (updateBEbarConsistent_)
-    // {
-    //     const surfaceSymmTensorField devBEbar(s/mu_);
-    //     bEbarf_ = devBEbar + this->Ibar(devBEbar)*I;
-    // }
-    // else
-    // {
-    //     bEbarf_ = (s/mu_) + Ibar*I;
-    // }
-
-    // // Update the Cauchy stress
-    // // Note: updayeSigmaHyd is not implemented for surface fields
-    // sigma = (1.0/Jf())*(0.5*K_*(pow(Jf(), 2) - 1)*I + s);
+    // Update the Cauchy stress
+    // Note: updayeSigmaHyd is not implemented for surface fields
+    sigma = (1.0/Jf())*(0.5*K_*(pow(Jf(), 2) - 1)*I + s);
 }
 
 
-Foam::scalar Foam::viscoPlastic::residual()
+Foam::scalar Foam::viscoPlasticRef::residual()
 {
     // Calculate residual based on change in plastic strain increment
     if
@@ -1436,7 +1338,7 @@ Foam::scalar Foam::viscoPlastic::residual()
 }
 
 
-void Foam::viscoPlastic::updateTotalFields()
+void Foam::viscoPlasticRef::updateTotalFields()
 {
     Info<< nl << "Updating total accumulated fields" << endl;
     sigmaY_ += DSigmaY_;
@@ -1514,7 +1416,7 @@ void Foam::viscoPlastic::updateTotalFields()
 }
 
 
-Foam::scalar Foam::viscoPlastic::newDeltaT()
+Foam::scalar Foam::viscoPlasticRef::newDeltaT()
 {
     // In the calculation of the plastic strain increment, the return direction
     // is kept constant for the time-step; we can approximate the error based on
@@ -1576,7 +1478,7 @@ Foam::scalar Foam::viscoPlastic::newDeltaT()
         {
             WarningIn
             (
-                "Foam::scalar Foam::viscoPlastic::newDeltaT()"
+                "Foam::scalar Foam::viscoPlasticRef::newDeltaT()"
                 " const"
             )   << "The error in the plastic strain is lover 50 times larger "
                 << "than the desired value!\n    Consider starting the "
@@ -1595,7 +1497,7 @@ Foam::scalar Foam::viscoPlastic::newDeltaT()
 }
 
 
-void Foam::viscoPlastic::setRestart()
+void Foam::viscoPlasticRef::setRestart()
 {
     F().writeOpt() = IOobject::AUTO_WRITE;
     J().writeOpt() = IOobject::AUTO_WRITE;

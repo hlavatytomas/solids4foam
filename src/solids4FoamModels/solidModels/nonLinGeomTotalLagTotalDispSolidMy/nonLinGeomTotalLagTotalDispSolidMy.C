@@ -192,22 +192,26 @@ bool nonLinGeomTotalLagTotalDispSolidMy::evolve()
         << endl;
 
     // Momentum equation loop
+
+    // Info << "Tu" <<endl;
     do
     {
+        // Info << "Tu2" <<endl;
 
         volScalarField pG = mesh().lookupObject<volScalarField>("pG");
 
-        // volScalarField deltaP = pG - min(pG);
+        volScalarField deltaP = pG - min(pG);
         // volScalarField deltaP = pG - (min(pG) + max(pG)) / 2;
-        volScalarField deltaP = pG - dimensionedScalar("dummyP", dimPressure, 1e5);
+        // volScalarField deltaP = pG - dimensionedScalar("dummyP", dimPressure, 1e5);
 
 
 
-        // volScalarField alphaF = mesh().lookupObject<volScalarField>("alphaF");
-        // volScalarField phiL = mesh().lookupObject<volScalarField>("phiL");
+        volScalarField alphaS = mesh().lookupObject<volScalarField>("alphaS");
+        volScalarField alphaL = mesh().lookupObject<volScalarField>("alphaL");
 
 
-        // volScalarField rho = 0 * dimensionedScalar("rhoL", dimMass / dimVolume, 1000) * alphaF * phiL + dimensionedScalar("rhoS", dimMass / dimVolume, 700) * (1 - alphaF);
+        volScalarField rho = dimensionedScalar("rhoL", dimMass / dimVolume, 1000) * alphaL + dimensionedScalar("rhoS", dimMass / dimVolume, 700) * alphaS;
+        // dimensionedScalar rho = dimensionedScalar("rhoStrida", dimMass / dimVolume, 300);
         // volScalarField rho = dimensionedScalar("rhoS", dimMass / dimVolume, 700) * (1 - alphaF);
         // volScalarField deltaP = pG;
 
@@ -215,6 +219,8 @@ bool nonLinGeomTotalLagTotalDispSolidMy::evolve()
         // Info << "max(impKf_) " << max(impKf_) << "min(impKf_)" << min(impKf_) << endl;
         // Info << "max(Finv_) " << max(Finv_) << "min(Finv_)" << min(Finv_) << endl;
         // Info << "max(g()) " << max(g()) << "min(g())" << min(g()) << endl;
+        // Info << "max(rho()) " << max(rho()) << "min(rho())" << min(rho()) << endl;
+        // Info << "max(rho()) " << rho << endl;
         // Info << "max(rho()) " << max(rho()) << "min(rho())" << min(rho()) << endl;
         // Info << "max(J_) " << max(J_) << "min(J_)" << min(J_) << "\n" << endl;
         // Info << "max(D()) " << max(D()) << "min(D())" << min(D()) << endl;
@@ -226,13 +232,15 @@ bool nonLinGeomTotalLagTotalDispSolidMy::evolve()
         // Momentum equation total displacement total Lagrangian form
         fvVectorMatrix DEqn
         (
-            // rho*fvm::d2dt2(D())
-            rho()*fvm::d2dt2(D())
+            // J_*rho*fvm::d2dt2(D())
+            // rho()*fvm::d2dt2(D())
+            rho*fvm::d2dt2(D())
          == fvm::laplacian(impKf_, D(), "laplacian(DD,D)")
           - fvc::laplacian(impKf_, D(), "laplacian(DD,D)")
           + fvc::div(J_*Finv_ & sigma(), "div(sigma)")
-        //   + rho*g()
-          + rho()*g()
+        //   + J_*rho*g()
+        //   + rho()*g()
+          + rho*g()
           - fvc::div(J_*Finv_ & deltaP*symmTensor(I))
           + stabilisation().stabilisation(D(), gradD(), impK_)
 
@@ -266,15 +274,19 @@ bool nonLinGeomTotalLagTotalDispSolidMy::evolve()
         // Info << "D     : res : " << solverPerfD.initialResidual() << endl;
 
         // Fixed or adaptive field under-relaxation
+        // D().relax();
         relaxField(D(), iCorr);
 
         // Increment of displacement
         DD() = D() - D().oldTime();
 
-        U() = fvc::ddt(D());
+        // U() = fvc::ddt(D());
 
         // Update gradient of displacement
         mechanical().grad(D(), gradD());
+
+        // Info << max(gradD()) << endl;
+
 
         // Update gradient of displacement increment
         gradDD() = gradD() - gradD().oldTime();

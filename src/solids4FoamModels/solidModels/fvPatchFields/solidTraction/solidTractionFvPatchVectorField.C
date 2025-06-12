@@ -170,7 +170,7 @@ solidTractionFvPatchVectorField
     }
     else if (dict.found("pressureField"))
     {
-        Info<< "    pressure is specified as a field" << endl;
+
         pressureFieldPtr_.set
         (
             new volScalarField
@@ -384,6 +384,15 @@ void solidTractionFvPatchVectorField::updateCoeffs()
 
     // Set surface-normal gradient on the patch corresponding to the desired
     // traction
+    
+    // Info << "min press" <<  min(pressure_) << "max press "<< max(pressure_) <<endl;
+    // if (patch().boundaryMesh().mesh().time().value() > 0)
+    // {
+    //     volScalarField pGForBC = patch().boundaryMesh().mesh().lookupObject<volScalarField>("pGForBC");
+    //     pressure_ = pGForBC.boundaryField()[patch().index()];
+    // }
+    // Info << "min press" <<  min(pressure_) << "max press "<< max(pressure_) <<endl;
+
     gradient() =
         relaxFac_*solMod.tractionBoundarySnGrad
         (

@@ -344,9 +344,12 @@ bool thermalLinGeomSolid::evolve()
 
         // Update gradient of displacement increment
         gradDD() = gradD() - gradD().oldTime();
+        // Info <<"pred mechanical correct" <<endl;
 
         // Calculate the stress using run-time selectable mechanical law
         mechanical().correct(sigma());
+
+        // Info << "po mechanical correct" <<endl;
 
         // Update impKf to improve convergence
         // Note: impK and rImpK are not updated as they are used for traction
