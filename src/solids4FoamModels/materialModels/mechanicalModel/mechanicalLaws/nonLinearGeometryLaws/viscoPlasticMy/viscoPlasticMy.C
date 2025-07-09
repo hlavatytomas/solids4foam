@@ -1035,8 +1035,12 @@ void Foam::viscoPlastic::correct(volSymmTensorField& sigma)
     // dimensionedScalar T ("temp", dimless, 27);
     volScalarField alphaG = 1 - alphaL - alphaS;
 
-    // volScalarField tau = (9 * (2 / 3.14 * Foam::atan((T - 65) / 2) + 1) + 2) * dimensionedScalar("dummyTime", dimTime, 1) * (- Foam::atan(4e4 * alphaG - 4e3) / 1e-3 + 1571.75);
-    volScalarField tau = (9 * (2 / 3.14 * Foam::atan((T - 65) / 2) + 1) + 2) * dimensionedScalar("dummyTime", dimTime, 1) * (- Foam::atan(1e3 * alphaG - 1e2) / 0.05 + 32.36);
+    // volScalarField tau = (9 * (2 / 3.14 * Foam::atan((T - 45) / 2) + 1) + 2) * dimensionedScalar("dummyTime", dimTime, 1); //* (- Foam::atan(4e4 * alphaG - 4e3) / 1e-3 + 1571.75);
+    volScalarField tau = (9 * (2 / 3.14 * Foam::atan((T - 65) / 2) + 1) + 2) * dimensionedScalar("dummyTime", dimTime, 1) * (- Foam::atan(4e4 * alphaG - 4e3) / 1e-3 + 1571.75);
+    // volScalarField tau = (9 * (2 / 3.14 * Foam::atan((T - 45) / 2) + 1) + 2) * dimensionedScalar("dummyTime", dimTime, 1); //* (- Foam::atan(4e4 * alphaG - 4e3) / 1e-3 + 1571.75);
+    // volScalarField tau = (9 * (2 / 3.14 * Foam::atan((T - 35) / 2) + 1) + 2) * dimensionedScalar("dummyTime", dimTime, 1); //* (- Foam::atan(4e4 * alphaG - 4e3) / 1e-3 + 1571.75);
+    // volScalarField tau =  dimensionedScalar("dummyTime", dimTime, 1) * (- Foam::atan(1e3 * alphaG - 1e2) / 0.05 + 32.36);
+    // volScalarField tau = (9 * (2 / 3.14 * Foam::atan((T - 65) / 2) + 1) + 2) * dimensionedScalar("dummyTime", dimTime, 1);
     // volScalarField tau = (9 * (2 / 3.14 * Foam::atan((T - 65) / 2) + 1) + 2) * dimensionedScalar("dummyTime", dimTime, 1) ;
     // forAll(tau, cellI)
     // {
@@ -1053,26 +1057,27 @@ void Foam::viscoPlastic::correct(volSymmTensorField& sigma)
     dimensionedScalar nu = 0.5 * (3 * K_ - 2 * mu_) / (3 * K_ + mu_);
     dimensionedScalar predMatice = 1 / ((1 + nu) * (1 - 2 * nu));
 
-    // volScalarField Epokus = E * (- Foam::atan(1e3 * alphaG - 1e2) / 0.5 + 32.36); 
+    // volScalarField Epokus = E * (9 * (2 / 3.14 * Foam::atan((T - 65) / 2) + 1) + 2) ; 
     // volScalarField Epokus = E * (- Foam::atan(1e3 * alphaG - 1e2) / 0.5 + 4.14); 
-    // volTensorField F = mesh().lookupObject<volTensorField>("F");
-    // volTensorField invF = inv(F);
-    // volTensorField S = J() * invF & sigma & invF.T();
+    volTensorField F = mesh().lookupObject<volTensorField>("F");
+    volScalarField J = det(F);
+    volTensorField invF = inv(F);
+    volTensorField S = J * invF & sigma & invF.T();
     // volSymmTensorField D0 = J() * sigma;
     // volSymmTensorField D0 = sigma;
     volSymmTensorField D0 = 0 * sigma;
-    // D0.replace(symmTensor::XX, S.component(tensor::XX) - nu * S.component(tensor::YY) - nu * S.component(tensor::ZZ));
-    // D0.replace(symmTensor::XY, (2 * nu + 2) * S.component(tensor::XY));
-    // D0.replace(symmTensor::XZ, (2 * nu + 2) * S.component(tensor::XZ));
-    // D0.replace(symmTensor::YY, - nu * S.component(tensor::XX) + S.component(tensor::YY) - nu * S.component(tensor::ZZ));
-    // D0.replace(symmTensor::YZ, (2 * nu + 2) * S.component(tensor::YZ));
-    // D0.replace(symmTensor::ZZ, - nu * S.component(tensor::XX) - nu * S.component(tensor::YY) + S.component(tensor::ZZ));
-    D0.replace(symmTensor::XX, sigma.component(symmTensor::XX) - nu * sigma.component(symmTensor::YY) - nu * sigma.component(symmTensor::ZZ));
-    D0.replace(symmTensor::XY, (2 * nu + 2) * sigma.component(symmTensor::XY));
-    D0.replace(symmTensor::XZ, (2 * nu + 2) * sigma.component(symmTensor::XZ));
-    D0.replace(symmTensor::YY, - nu * sigma.component(symmTensor::XX) + sigma.component(symmTensor::YY) - nu * sigma.component(symmTensor::ZZ));
-    D0.replace(symmTensor::YZ, (2 * nu + 2) * sigma.component(symmTensor::YZ));
-    D0.replace(symmTensor::ZZ, - nu * sigma.component(symmTensor::XX) - nu * sigma.component(symmTensor::YY) + sigma.component(symmTensor::ZZ));
+    D0.replace(symmTensor::XX, S.component(tensor::XX) - nu * S.component(tensor::YY) - nu * S.component(tensor::ZZ));
+    D0.replace(symmTensor::XY, (2 * nu + 2) * S.component(tensor::XY));
+    D0.replace(symmTensor::XZ, (2 * nu + 2) * S.component(tensor::XZ));
+    D0.replace(symmTensor::YY, - nu * S.component(tensor::XX) + S.component(tensor::YY) - nu * S.component(tensor::ZZ));
+    D0.replace(symmTensor::YZ, (2 * nu + 2) * S.component(tensor::YZ));
+    D0.replace(symmTensor::ZZ, - nu * S.component(tensor::XX) - nu * S.component(tensor::YY) + S.component(tensor::ZZ));
+    // D0.replace(symmTensor::XX, sigma.component(symmTensor::XX) - nu * sigma.component(symmTensor::YY) - nu * sigma.component(symmTensor::ZZ));
+    // D0.replace(symmTensor::XY, (2 * nu + 2) * sigma.component(symmTensor::XY));
+    // D0.replace(symmTensor::XZ, (2 * nu + 2) * sigma.component(symmTensor::XZ));
+    // D0.replace(symmTensor::YY, - nu * sigma.component(symmTensor::XX) + sigma.component(symmTensor::YY) - nu * sigma.component(symmTensor::ZZ));
+    // D0.replace(symmTensor::YZ, (2 * nu + 2) * sigma.component(symmTensor::YZ));
+    // D0.replace(symmTensor::ZZ, - nu * sigma.component(symmTensor::XX) - nu * sigma.component(symmTensor::YY) + sigma.component(symmTensor::ZZ));
 
     // Info << "E = " << E << endl;
     // Info << "tau = " << tau << endl;
@@ -1080,21 +1085,39 @@ void Foam::viscoPlastic::correct(volSymmTensorField& sigma)
     // Info << "dTime = " << dTime << endl; 
 
     // Update DEpsilonP and DEpsilonPEq
-    DEpsilonP_ = 1 / E / tau * D0 * dTime;
+    // DEpsilonP_ = 1 / E / tau * D0 * dTime;
+
+    volTensorField pomoc = 1 / J / E / tau * dTime * (F & D0 & F.T());
+    DEpsilonP_.replace(symmTensor::XX, pomoc.component(tensor::XX));
+    DEpsilonP_.replace(symmTensor::XY, pomoc.component(tensor::XY));
+    DEpsilonP_.replace(symmTensor::XZ, pomoc.component(tensor::XZ));
+    DEpsilonP_.replace(symmTensor::YY, pomoc.component(tensor::YY));
+    DEpsilonP_.replace(symmTensor::YZ, pomoc.component(tensor::YZ));
+    DEpsilonP_.replace(symmTensor::ZZ, pomoc.component(tensor::ZZ));
+
+
     // DEpsilonP_ = 1 / Epokus / tau * D0 * dTime;
     // DEpsilonP_ = 1 / E / tau * sigma * dTime;
     DEpsilonP_.correctBoundaryConditions();
 
-    // const volTensorField& gradDD = mesh().lookupObject<volTensorField>("grad(DD)");
+    const volTensorField& gradDD = mesh().lookupObject<volTensorField>("grad(DD)");
 
-    volVectorField D = mesh().lookupObject<volVectorField>("D");
+    // volVectorField D = mesh().lookupObject<volVectorField>("D");
 
-    volVectorField DD = D - D.oldTime();
+    // volVectorField DD = D - D.oldTime();
 
-    volTensorField gradDD = fvc::grad(DD);
+    // volTensorField gradDD = fvc::grad(DD);
 
     
     volSymmTensorField dEpsilon = symm(gradDD);
+    // volSymmTensorField dEpsilon = F & symm(gradDD) & F.T();
+    volTensorField pomoc2 = 1/ J * F & symm(gradDD) & F.T();
+    dEpsilon.replace(symmTensor::XX, pomoc2.component(tensor::XX));
+    dEpsilon.replace(symmTensor::XY, pomoc2.component(tensor::XY));
+    dEpsilon.replace(symmTensor::XZ, pomoc2.component(tensor::XZ));
+    dEpsilon.replace(symmTensor::YY, pomoc2.component(tensor::YY));
+    dEpsilon.replace(symmTensor::YZ, pomoc2.component(tensor::YZ));
+    dEpsilon.replace(symmTensor::ZZ, pomoc2.component(tensor::ZZ));
 
     // volSymmTensorField dSigma = Epokus * dEpsilon;
     volSymmTensorField dSigma = E * dEpsilon;
@@ -1182,7 +1205,8 @@ void Foam::viscoPlastic::correct(surfaceSymmTensorField& sigma)
     dimensionedScalar dTime("dTime", dimTime, dTimeSc);
     volScalarField T = mesh().lookupObject<volScalarField>("T") / dimensionedScalar("dummyT", dimTemperature, 1) - 276;
     // dimensionedScalar T ("temp", dimless, 27);
-    volScalarField tau = (9 * (2 / 3.14 * Foam::atan((T - 65) / 2) + 1) + 2) * dimensionedScalar("dummyTime", dimTime, 1);
+    // volScalarField tau = (9 * (2 / 3.14 * Foam::atan((T - 65) / 2) + 1) + 2) * dimensionedScalar("dummyTime", dimTime, 1);
+    volScalarField tau = (50 * (2 / 3.14 * Foam::atan((T - 65) / 2) + 1) + 2) * dimensionedScalar("dummyTime", dimTime, 1);
     // dimensionedScalar tau = (9 * (2 / 3.14 * Foam::atan((T - 65) / 2) + 1) + 2) * dimensionedScalar("dummyTime", dimTime, 1);
     // dimensionedScalar tau = dimensionedScalar("dummyTime", dimTime, 2);
     dimensionedScalar E = 9 * mu_ * K_ / (3 * K_ + mu_);

@@ -386,12 +386,19 @@ void solidTractionFvPatchVectorField::updateCoeffs()
     // traction
     
     // Info << "min press" <<  min(pressure_) << "max press "<< max(pressure_) <<endl;
-    // if (patch().boundaryMesh().mesh().time().value() > 0)
+
+    // Info << "min press" <<  min(pressure_) << "max press "<< max(pressure_) <<endl;
+    // Info << "min press" <<  min(press) << "max press "<< max(press) <<endl;
+    // if (patch().boundaryMesh().mesh().foundObject<volScalarField>("pG"))
     // {
     //     volScalarField pGForBC = patch().boundaryMesh().mesh().lookupObject<volScalarField>("pGForBC");
     //     pressure_ = pGForBC.boundaryField()[patch().index()];
+    //     press = pGForBC.boundaryField()[patch().index()];
+    //     // Info << "min volpress" <<  min(pGForBC).value() << "max volpress "<< max(pGForBC).value() <<endl;
+
     // }
     // Info << "min press" <<  min(pressure_) << "max press "<< max(pressure_) <<endl;
+    // Info << "min press" <<  min(press) << "max press "<< max(press) <<endl;
 
     gradient() =
         relaxFac_*solMod.tractionBoundarySnGrad

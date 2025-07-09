@@ -232,15 +232,15 @@ bool nonLinGeomTotalLagTotalDispSolidMy::evolve()
         // Momentum equation total displacement total Lagrangian form
         fvVectorMatrix DEqn
         (
-            // J_*rho*fvm::d2dt2(D())
+            J_*rho*fvm::d2dt2(D())
             // rho()*fvm::d2dt2(D())
-            rho*fvm::d2dt2(D())
+            // rho*fvm::d2dt2(D())
          == fvm::laplacian(impKf_, D(), "laplacian(DD,D)")
           - fvc::laplacian(impKf_, D(), "laplacian(DD,D)")
           + fvc::div(J_*Finv_ & sigma(), "div(sigma)")
-        //   + J_*rho*g()
+          + J_*rho*g()
         //   + rho()*g()
-          + rho*g()
+        //   + rho*g()
           - fvc::div(J_*Finv_ & deltaP*symmTensor(I))
           + stabilisation().stabilisation(D(), gradD(), impK_)
 
