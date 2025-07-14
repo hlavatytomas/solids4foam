@@ -19,6 +19,7 @@ solidModels/nonLinGeomUpdatedLagSolid/nonLinGeomUpdatedLagSolid.C
 solidModels/nonLinGeomTotalLagSolid/nonLinGeomTotalLagSolid.C
 solidModels/nonLinGeomTotalLagTotalDispSolid/nonLinGeomTotalLagTotalDispSolid.C
 solidModels/nonLinGeomTotalLagTotalDispSolidMy/nonLinGeomTotalLagTotalDispSolidMy.C
+solidModels/breadBakingSolid/breadBakingSolid.C
 solidModels/poroLinGeomSolid/poroLinGeomSolid.C
 solidModels/thermalLinGeomSolid/thermalLinGeomSolid.C
 solidModels/thermalSolid/thermalSolid.C
@@ -78,6 +79,7 @@ $(nonLinGeomLaws)/OgdenElastic/OgdenElastic.C
 $(nonLinGeomLaws)/MooneyRivlinElastic/MooneyRivlinElastic.C
 $(nonLinGeomLaws)/neoHookeanElastic/neoHookeanElastic.C
 $(nonLinGeomLaws)/neoHookeanElasticMisesPlastic/neoHookeanElasticMisesPlastic.C
+$(nonLinGeomLaws)/viscoBread/viscoBread.C
 $(nonLinGeomLaws)/viscoPlasticMy/viscoPlasticMy.C
 $(nonLinGeomLaws)/viscoPlasticRef/viscoPlasticRef.C
 $(nonLinGeomLaws)/rotationInvariantLinearElastic/rotationInvariantLinearElastic.C
