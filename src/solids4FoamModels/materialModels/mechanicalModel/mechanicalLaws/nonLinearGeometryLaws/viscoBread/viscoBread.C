@@ -433,7 +433,7 @@ void Foam::viscoBread::correct(volSymmTensorField& sigma)
     dimensionedScalar dTime("dTime", dimTime, dTimeSc); // -- timestep
 
     // -- temperature
-    volScalarField T = mesh().lookupObject<volScalarField>("T") / dimensionedScalar("dummyT", dimTemperature, 1) - 276;
+    volScalarField T = mesh().lookupObject<volScalarField>("T") / dimensionedScalar("dummyT", dimTemperature, 1) - 273;
 
     // -- composition
     volScalarField alphaS = mesh().lookupObject<volScalarField>("alphaS");
@@ -441,7 +441,7 @@ void Foam::viscoBread::correct(volSymmTensorField& sigma)
     volScalarField alphaG = 1 - alphaL - alphaS;
 
     // -- relaxation time, Young modulus, Poisson ration, pre-elastic matrix factor
-    volScalarField tau = (9 * (2 / 3.14 * Foam::atan((T - 65) / 2) + 1) + 2) * dimensionedScalar("dummyTime", dimTime, 1) * (- Foam::atan(4e4 * alphaG - 4e3) / 1e-3 + 1571.75);
+    volScalarField tau = (9.0 * (2.0 / 3.14 * Foam::atan((T - 65) / 2) + 1) + 2) * dimensionedScalar("dummyTime", dimTime, 1) * (- Foam::atan(4e4 * alphaG - 4e3) / 1e-3 + 1571.75);
     dimensionedScalar E = 9 * mu_ * K_ / (3 * K_ + mu_);
     dimensionedScalar nu = 0.5 * (3 * K_ - 2 * mu_) / (3 * K_ + mu_);
     dimensionedScalar preCoeff = 1 / ((1 + nu) * (1 - 2 * nu));
@@ -458,6 +458,8 @@ void Foam::viscoBread::correct(volSymmTensorField& sigma)
     D0.replace(symmTensor::ZZ, - nu * S.component(tensor::XX) - nu * S.component(tensor::YY) + S.component(tensor::ZZ));
 
     volTensorField dEpsPInit = 1 / J() / E / tau * dTime * (F() & D0 & F().T());
+    // DEpsilonP_ = 1 / E / tau * dTime * D0;
+    // DEpsilonP_ = 1 / E / tau * dTime * sigma;
     DEpsilonP_.replace(symmTensor::XX, dEpsPInit.component(tensor::XX));
     DEpsilonP_.replace(symmTensor::XY, dEpsPInit.component(tensor::XY));
     DEpsilonP_.replace(symmTensor::XZ, dEpsPInit.component(tensor::XZ));
@@ -467,6 +469,8 @@ void Foam::viscoBread::correct(volSymmTensorField& sigma)
     DEpsilonP_.correctBoundaryConditions();
 
     const volTensorField& gradDD = mesh().lookupObject<volTensorField>("grad(DD)");
+    // const volVectorField& DD = mesh().lookupObject<volVectorField>("DD");
+    // volTensorField gradDD = fvc::grad(DD);
     
     volSymmTensorField dEpsilon = symm(gradDD);
     volTensorField dEpsInit = 1 / J() * F() & symm(gradDD) & F().T();

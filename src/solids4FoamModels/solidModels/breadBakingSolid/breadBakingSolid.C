@@ -219,7 +219,8 @@ bool breadBakingSolid::evolve()
           - fvc::laplacian(impKf_, D(), "laplacian(DD,D)")
           + fvc::div(J_*Finv_ & sigma(), "div(sigma)")
           + J_*rho*g()
-          - fvc::div(J_*Finv_ & deltaP*symmTensor(I))
+        //   - fvc::div(J_*Finv_ & deltaP*symmTensor(I))
+          - fvc::div(J_*Finv_ & deltaP*I)
           + stabilisation().stabilisation(D(), gradD(), impK_)
         );
 
