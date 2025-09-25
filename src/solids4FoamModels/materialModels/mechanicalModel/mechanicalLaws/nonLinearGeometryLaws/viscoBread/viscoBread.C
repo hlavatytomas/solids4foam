@@ -441,10 +441,19 @@ void Foam::viscoBread::correct(volSymmTensorField& sigma)
     volScalarField alphaG = 1 - alphaL - alphaS;
 
     // -- relaxation time, Young modulus, Poisson ration, pre-elastic matrix factor
-    volScalarField tau = (9.0 * (2.0 / 3.14 * Foam::atan((T - 65) / 2) + 1) + 2) * dimensionedScalar("dummyTime", dimTime, 1) * (- Foam::atan(4e4 * alphaG - 4e3) / 1e-3 + 1571.75);
-    dimensionedScalar E = 9 * mu_ * K_ / (3 * K_ + mu_);
-    dimensionedScalar nu = 0.5 * (3 * K_ - 2 * mu_) / (3 * K_ + mu_);
-    dimensionedScalar preCoeff = 1 / ((1 + nu) * (1 - 2 * nu));
+    // volScalarField tau = (9.0 * (2.0 / 3.14 * Foam::atan((T - 65) / 2) + 1) + 2) * dimensionedScalar("dummyTime", dimTime, 1) * (- Foam::atan(4e4 * alphaG - 4e3) / 1e-3 + 1571.75);
+    volScalarField tau = (9.0 * (2.0 / 3.14 * Foam::atan((T - 65) / 2) + 1) + 2) * dimensionedScalar("dummyTime", dimTime, 1);
+    // dimensionedScalar E = 9 * mu_ * K_ / (3 * K_ + mu_);
+    // dimensionedScalar nu = 0.5 * (3 * K_ - 2 * mu_) / (3 * K_ + mu_);
+
+    volScalarField K_my = K_ * (1 / (100 * alphaG - 10) + 1);
+    // volScalarField K_my = K_ * (- Foam::atan(4e4 * alphaG - 4e3) / 1e-3 + 1571.75);
+
+    volScalarField E = 9 * mu_ * K_my  / (3 * K_my + mu_);
+    volScalarField nu = 0.5 * (3 * K_my - 2 * mu_) / (3 * K_my + mu_);
+
+    // dimensionedScalar preCoeff = 1 / ((1 + nu) * (1 - 2 * nu));
+    volScalarField preCoeff = 1 / ((1 + nu) * (1 - 2 * nu));
 
 
     volTensorField invF = inv(F());
