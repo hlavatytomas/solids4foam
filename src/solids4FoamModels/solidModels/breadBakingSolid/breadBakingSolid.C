@@ -152,6 +152,7 @@ breadBakingSolid::breadBakingSolid
     D().correctBoundaryConditions();
     if (restart())
     {
+        Info << "Going from restart" << endl;
         DD() = D() - D().oldTime();
         mechanical().grad(D(), gradD());
         gradDD() = gradD() - gradD().oldTime();
