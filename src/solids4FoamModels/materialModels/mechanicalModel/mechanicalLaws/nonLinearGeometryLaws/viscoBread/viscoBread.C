@@ -422,6 +422,7 @@ void Foam::viscoBread::correct(volSymmTensorField& sigma)
 
     // Update the Jacobian of the total deformation gradient
     J() = det(F());
+    J().correctBoundaryConditions();
 
     // Store previous iteration for under-relaxation and calculation of plastic
     // residual in the solver
@@ -439,10 +440,12 @@ void Foam::viscoBread::correct(volSymmTensorField& sigma)
     volScalarField alphaS = mesh().lookupObject<volScalarField>("alphaS");
     volScalarField alphaL = mesh().lookupObject<volScalarField>("alphaL");
     volScalarField alphaG = 1 - alphaL - alphaS;
+    alphaG.correctBoundaryConditions();
 
     // -- relaxation time, Young modulus, Poisson ration, pre-elastic matrix factor
     // volScalarField tau = (9.0 * (2.0 / 3.14 * Foam::atan((T - 65) / 2) + 1) + 2) * dimensionedScalar("dummyTime", dimTime, 1) * (- Foam::atan(4e4 * alphaG - 4e3) / 1e-3 + 1571.75);
     volScalarField tau = (9.0 * (2.0 / 3.14 * Foam::atan((T - 65) / 2) + 1) + 2) * dimensionedScalar("dummyTime", dimTime, 1) * (- Foam::atan(4e4 * alphaG - 4e3) / 1e-3 + 1571.75);
+    tau.correctBoundaryConditions();
     dimensionedScalar E = 9 * mu_ * K_ / (3 * K_ + mu_);
     dimensionedScalar nu = 0.5 * (3 * K_ - 2 * mu_) / (3 * K_ + mu_);
 
@@ -458,7 +461,9 @@ void Foam::viscoBread::correct(volSymmTensorField& sigma)
 
 
     volTensorField invF = inv(F());
+    invF.correctBoundaryConditions();
     volTensorField S = J() * invF & sigma & invF.T();
+    S.correctBoundaryConditions();
     volSymmTensorField D0 = 0 * sigma;
     D0.replace(symmTensor::XX, S.component(tensor::XX) - nu * S.component(tensor::YY) - nu * S.component(tensor::ZZ));
     D0.replace(symmTensor::XY, (2 * nu + 2) * S.component(tensor::XY));
@@ -466,8 +471,10 @@ void Foam::viscoBread::correct(volSymmTensorField& sigma)
     D0.replace(symmTensor::YY, - nu * S.component(tensor::XX) + S.component(tensor::YY) - nu * S.component(tensor::ZZ));
     D0.replace(symmTensor::YZ, (2 * nu + 2) * S.component(tensor::YZ));
     D0.replace(symmTensor::ZZ, - nu * S.component(tensor::XX) - nu * S.component(tensor::YY) + S.component(tensor::ZZ));
+    D0.correctBoundaryConditions();
 
     volTensorField dEpsPInit = 1 / J() / E / tau * dTime * (F() & D0 & F().T());
+    dEpsPInit.correctBoundaryConditions();
     // DEpsilonP_ = 1 / E / tau * dTime * D0;
     // DEpsilonP_ = 1 / E / tau * dTime * sigma;
     DEpsilonP_.replace(symmTensor::XX, dEpsPInit.component(tensor::XX));
@@ -483,6 +490,7 @@ void Foam::viscoBread::correct(volSymmTensorField& sigma)
     // volTensorField gradDD = fvc::grad(DD);
     
     volSymmTensorField dEpsilon = symm(gradDD);
+    dEpsilon.correctBoundaryConditions();
     volTensorField dEpsInit = 1 / J() * F() & symm(gradDD) & F().T();
     dEpsilon.replace(symmTensor::XX, dEpsInit.component(tensor::XX));
     dEpsilon.replace(symmTensor::XY, dEpsInit.component(tensor::XY));
@@ -491,6 +499,7 @@ void Foam::viscoBread::correct(volSymmTensorField& sigma)
     dEpsilon.replace(symmTensor::YZ, dEpsInit.component(tensor::YZ));
     dEpsilon.replace(symmTensor::ZZ, dEpsInit.component(tensor::ZZ));
 
+    dEpsilon.correctBoundaryConditions();
     volSymmTensorField dSigma = E * dEpsilon;
 
     dSigma.replace(symmTensor::XX, E * preCoeff * ((1 - nu) * dEpsilon.component(symmTensor::XX) + (nu) * dEpsilon.component(symmTensor::YY) + (nu) * dEpsilon.component(symmTensor::ZZ)));
@@ -499,6 +508,7 @@ void Foam::viscoBread::correct(volSymmTensorField& sigma)
     dSigma.replace(symmTensor::YY, E * preCoeff * ((nu) * dEpsilon.component(symmTensor::XX) + (1 - nu) * dEpsilon.component(symmTensor::YY) + (nu) * dEpsilon.component(symmTensor::ZZ)));
     dSigma.replace(symmTensor::YZ, E * preCoeff * (1 - 2 * nu) / 2 * dEpsilon.component(symmTensor::YZ));
     dSigma.replace(symmTensor::ZZ, E * preCoeff * ((nu) * dEpsilon.component(symmTensor::XX) + (nu) * dEpsilon.component(symmTensor::YY) + (1 - nu) * dEpsilon.component(symmTensor::ZZ)));
+    dSigma.correctBoundaryConditions();
 
     volSymmTensorField dSigmaP = E * DEpsilonP_;
 
@@ -508,8 +518,10 @@ void Foam::viscoBread::correct(volSymmTensorField& sigma)
     dSigmaP.replace(symmTensor::YY, E * preCoeff * ((nu) * DEpsilonP_.component(symmTensor::XX) + (1 - nu) * DEpsilonP_.component(symmTensor::YY) + (nu) * DEpsilonP_.component(symmTensor::ZZ)));
     dSigmaP.replace(symmTensor::YZ, E * preCoeff * (1 - 2 * nu) / 2 * DEpsilonP_.component(symmTensor::YZ));
     dSigmaP.replace(symmTensor::ZZ, E * preCoeff * ((nu) * DEpsilonP_.component(symmTensor::XX) + (nu) * DEpsilonP_.component(symmTensor::YY) + (1 - nu) * DEpsilonP_.component(symmTensor::ZZ)));
+    dSigmaP.correctBoundaryConditions();
 
     sigma = sigma.oldTime() + (dSigma - dSigmaP);
+    sigma.correctBoundaryConditions();
 }
 
 
