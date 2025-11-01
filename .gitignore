@@ -44,6 +44,8 @@ tutorials/fluidSolidInteraction-preCICE/tutorials
 
 .vscode
 
+ZZ_myExamples/*
+
 # derived files
 lex.yy.c
 

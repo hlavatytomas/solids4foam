@@ -24,6 +24,8 @@ License
 #include "fvc.H"
 #include "fvm.H"
 #include "pointFieldFunctions.H"
+#include "SVD.H"
+#include "scalarMatrices.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -598,6 +600,32 @@ Foam::linearElasticMisesPlasticThermalRelax::linearElasticMisesPlasticThermalRel
         mesh,
         dimensionedSymmTensor("zero", dimless, symmTensor::zero)
     ), 
+    DEpsilonTREq_
+    (
+        IOobject
+        (
+            "DEpsilonTREq",
+            mesh.time().timeName(),
+            mesh,
+            IOobject::READ_IF_PRESENT,
+            IOobject::AUTO_WRITE
+        ),
+        mesh,
+        dimensionedScalar("0", dimless, 0.0)
+    ), 
+    sigmaEqMoje_
+    (
+        IOobject
+        (
+            "sigmaEqMoje",
+            mesh.time().timeName(),
+            mesh,
+            IOobject::READ_IF_PRESENT,
+            IOobject::AUTO_WRITE
+        ),
+        mesh,
+        dimensionedScalar("0", dimPressure, 1)
+    ), 
     C_("zero", dimless/dimPressure, 0.0),
     n_("zero", dimless, 0.0)
 {
@@ -616,7 +644,9 @@ Foam::linearElasticMisesPlasticThermalRelax::linearElasticMisesPlasticThermalRel
     epsilonf().oldTime();
     epsilonP_.oldTime();
     epsilonPf_.oldTime();
+    DEpsilonTR_.oldTime();
     epsilonTR_.oldTime();
+    DEpsilonTREq_.oldTime();
     pEpsilonP_.oldTime();
     epsilonPEq_.oldTime();
     epsilonPEqf_.oldTime();
@@ -1111,10 +1141,48 @@ void Foam::linearElasticMisesPlasticThermalRelax::correct(volSymmTensorField& si
 
     const Time& time = mesh().time();
     scalar dTimeSc = time.deltaTValue();
-    DEpsilonTR_.storePrevIter();
+
+    // sigmaEqMoje_ = (sqrtTwoOverThree_*magSqr(dev(sigma)));
+    // Info << "tu1" <<endl;
+    sigmaEqMoje_ = sqrt((3.0/2.0)*magSqr(dev(sigma)));
+    // Info << "tu2" <<endl;
+    // volScalarField sigmaEq(sqrtTwoOverThree_*magSqr(dev(sigma)));
+
+    DEpsilonTREq_ = C_ * dimensionedScalar("dummyp", dimPressure, 1) * Foam::pow(sigmaEqMoje_ / dimensionedScalar("dummyp", dimPressure, 1e6), n_.value()) * dTimeSc;
+    // // DEpsilonTR_ = DEpsilonTREq_ / sqrtTwoOverThree_ * plasticN_;
+    // DEpsilonTR_ = DEpsilonTREq_ / sqrtTwoOverThree_ * dev(sigma) / sigmaEqMoje_;
+    // Info << "tu3" <<endl;
+    forAll(DEpsilonTR_, cellI)
+    {
+        if (sigmaEqMoje_[cellI] > SMALL)
+        {
+            DEpsilonTR_[cellI] = DEpsilonTREq_[cellI] / sqrtTwoOverThree_ * dev(sigma[cellI]) / sigmaEqMoje_[cellI];
+        }
+    }
+    DEpsilonTR_.correctBoundaryConditions();
+    // Info << "tu4" <<endl;
+    
+    // DEpsilonTR_.storePrevIter();
     // DEpsilonTR_ = C_ * sigma * sigma * dTimeSc;
+
+    // volSymmTensorField powSigma = sigma / dimensionedScalar("dimPressure", dimPressure, 1e6);
+    // forAll(powSigma, cellI)
+    // {
+
+    //     scalarList eigenVals = S.eigenValues();
+
+    //     // Compute eigenvectors
+    //     vectorList eigenVecs = S.eigenVectors();
+    // }
+
     
     // DEpsilonTR_ = C_ * dimensionedScalar("dummy", dimPressure, 1) * Foam::pow(sigma /dimensionedScalar("dummy", dimPressure, 1), n_.value()) * dTimeSc;
+    // epsilonTR_.storePrevIter();
+
+    // forAll(DEpsilonTR_, cellI)
+    // {
+    //     DEpsilonTR_[cellI] = DEpsilonTREq_[cellI] / sqrtTwoOverThree_ * sigma[cellI] / mag(sigma[cellI]);
+    // }
 
     // DEpsilonTR_.replace(symmTensor::XX, C_ / dimensionedScalar("dummy", dimPressure, 1) * dTimeSc * sigma.component(symmTensor::XX) * sigma.component(symmTensor::XX));
     // DEpsilonTR_.replace(symmTensor::XY, C_ / dimensionedScalar("dummy", dimPressure, 1) * dTimeSc * sigma.component(symmTensor::XY) * sigma.component(symmTensor::XY));
@@ -1122,15 +1190,9 @@ void Foam::linearElasticMisesPlasticThermalRelax::correct(volSymmTensorField& si
     // DEpsilonTR_.replace(symmTensor::YY, C_ / dimensionedScalar("dummy", dimPressure, 1) * dTimeSc * sigma.component(symmTensor::YY) * sigma.component(symmTensor::YY));
     // DEpsilonTR_.replace(symmTensor::YZ, C_ / dimensionedScalar("dummy", dimPressure, 1) * dTimeSc * sigma.component(symmTensor::YZ) * sigma.component(symmTensor::YZ));
     // DEpsilonTR_.replace(symmTensor::ZZ, C_ / dimensionedScalar("dummy", dimPressure, 1) * dTimeSc * sigma.component(symmTensor::ZZ) * sigma.component(symmTensor::ZZ));
-    DEpsilonTR_.replace(symmTensor::XX, C_ * dimensionedScalar("dummy", dimPressure, 1) * dTimeSc * Foam::pow(sigma.component(symmTensor::XX)/dimensionedScalar("dummy", dimPressure, 1e6), n_.value()));
-    DEpsilonTR_.replace(symmTensor::XY, C_ * dimensionedScalar("dummy", dimPressure, 1) * dTimeSc * Foam::pow(sigma.component(symmTensor::XY)/dimensionedScalar("dummy", dimPressure, 1e6), n_.value()));
-    DEpsilonTR_.replace(symmTensor::XZ, C_ * dimensionedScalar("dummy", dimPressure, 1) * dTimeSc * Foam::pow(sigma.component(symmTensor::XZ)/dimensionedScalar("dummy", dimPressure, 1e6), n_.value()));
-    DEpsilonTR_.replace(symmTensor::YY, C_ * dimensionedScalar("dummy", dimPressure, 1) * dTimeSc * Foam::pow(sigma.component(symmTensor::YY)/dimensionedScalar("dummy", dimPressure, 1e6), n_.value()));
-    DEpsilonTR_.replace(symmTensor::YZ, C_ * dimensionedScalar("dummy", dimPressure, 1) * dTimeSc * Foam::pow(sigma.component(symmTensor::YZ)/dimensionedScalar("dummy", dimPressure, 1e6), n_.value()));
-    DEpsilonTR_.replace(symmTensor::ZZ, C_ * dimensionedScalar("dummy", dimPressure, 1) * dTimeSc * Foam::pow(sigma.component(symmTensor::ZZ)/dimensionedScalar("dummy", dimPressure, 1e6), n_.value()));
 
     
-    epsilonTR_.storePrevIter();
+
     epsilonTR_ = epsilonTR_.oldTime() + DEpsilonTR_;
 
     // Calculate deviatoric stress

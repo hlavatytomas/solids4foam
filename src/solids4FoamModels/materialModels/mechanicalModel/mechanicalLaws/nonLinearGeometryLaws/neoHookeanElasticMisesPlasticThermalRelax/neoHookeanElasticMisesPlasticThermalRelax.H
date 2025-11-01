@@ -1,5 +1,3 @@
-
-
 /*---------------------------------------------------------------------------*\
 License
     This file is part of solids4foam.
@@ -18,13 +16,13 @@ License
     along with solids4foam.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    linearElasticMisesPlasticThermalRelax
+    neoHookeanElasticMisesPlasticThermalRelax
 
 Description
-    Elasto-plastic mechanical law as described by Simo & Hughes (1998)
-    in Box 3.2.
+    Hyper-elasto-plastic mechanical law as described by Simo & Hughes (1998)
+    in Box 9.1.
 
-    Linear (Hookean) elasticity with Mises/J2 plasticity.
+    Neo-Hookean elasticity with Mises/J2 plasticity.
 
     For elastic parameters, the user can specify:
         - Young's modulus (E) and Poisson's ratio (nu)
@@ -40,21 +38,21 @@ Description
     doi=10.1002/nme.5345.
 
 SourceFiles
-    linearElasticMisesPlasticThermalRelax.C
+    neoHookeanElasticMisesPlasticThermalRelax.C
 
 Author
     Philip Cardiff, UCD. All rights reserved.
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef linearElasticMisesPlasticThermalRelax_H
-#define linearElasticMisesPlasticThermalRelax_H
+#ifndef neoHookeanElasticMisesPlasticThermalRelax_H
+#define neoHookeanElasticMisesPlasticThermalRelax_H
 
 #include "mechanicalLaw.H"
-#include "surfaceMesh.H"
-#include "zeroGradientFvPatchFields.H"
 #include "interpolationTable.H"
-#include "pointFields.H"
+#ifdef OPENFOAM_NOT_EXTEND
+    #include "surfaceFields.H"
+#endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -65,14 +63,11 @@ namespace Foam
                          Class linearElastic Declaration
 \*---------------------------------------------------------------------------*/
 
-class linearElasticMisesPlasticThermalRelax
+class neoHookeanElasticMisesPlasticThermalRelax
 :
     public mechanicalLaw
 {
     // Private data
-
-        //- Point mesh
-        const pointMesh& pMesh_;
 
         //- Shear modulus
         dimensionedScalar mu_;
@@ -80,23 +75,22 @@ class linearElasticMisesPlasticThermalRelax
         //- Bulk modulus
         dimensionedScalar K_;
 
-        //- Young's modulus
-        dimensionedScalar E_;
+        //- Jacobian of the toal deformation gradient volField
+        autoPtr<volScalarField> JPtr_;
 
-        //- Poisson's ratio
-        dimensionedScalar nu_;
+        //- Jacobian of the toal deformation gradient surfaceField
+        autoPtr<surfaceScalarField> JfPtr_;
 
         //- Table of plastic strain versus post-yield stress
+        //  For large strain total Lagrangian models, it expects
+        //  the true stress and true plastic strain.
         interpolationTable<scalar> stressPlasticStrainSeries_;
 
-        //- Yield stress
+        //- Cauchy yield stress
         volScalarField sigmaY_;
 
-        //- Yield stress surface field
+        //- Cauchy yield stress surface field
         surfaceScalarField sigmaYf_;
-
-        //- Yield stress point field
-        pointScalarField pSigmaY_;
 
         //- Incremental change in sigmaY
         volScalarField DSigmaY_;
@@ -104,23 +98,32 @@ class linearElasticMisesPlasticThermalRelax
         //- Incremental change in sigmaY surface field
         surfaceScalarField DSigmaYf_;
 
-        //- Incremental change in sigmaY point field
-        pointScalarField pDSigmaY_;
-
         //- Total plastic strain
         volSymmTensorField epsilonP_;
 
         //- Total plastic strain surface field
         surfaceSymmTensorField epsilonPf_;
 
-        //- Total plastic strain point field
-        pointSymmTensorField pEpsilonP_;
-
         //- Incremental change of plastic strain
         volSymmTensorField DEpsilonP_;
 
         //- Incremental change of plastic strain surface field
         surfaceSymmTensorField DEpsilonPf_;
+
+        //- Elastic left Cauchy-Green trial strain tensor with volumetric term
+        //  removed. Trial means that plasticity is neglected.
+        volSymmTensorField bEbarTrial_;
+
+        //- Elastic left Cauchy-Green trial strain tensor with volumetric term
+        //  removed surface field
+        surfaceSymmTensorField bEbarTrialf_;
+
+        //- Elastic left Cauchy-Green strain tensor with volumetric term removed
+        volSymmTensorField bEbar_;
+
+        //- Elastic left Cauchy-Green strain tensor with volumetric term removed
+        //  surface field
+        surfaceSymmTensorField bEbarf_;
 
         //- Equivalent plastic strain increment
         volScalarField DEpsilonPEq_;
@@ -134,17 +137,11 @@ class linearElasticMisesPlasticThermalRelax
         //- Plastic multiplier increment - surface field
         surfaceScalarField DLambdaf_;
 
-        //- Plastic multiplier increment - point field
-        pointScalarField pDLambda_;
-
         //- Equivalent plastic strain
         volScalarField epsilonPEq_;
 
         //- Equivalent plastic strain surface field
         surfaceScalarField epsilonPEqf_;
-
-        //- Equivalent plastic strain point field
-        pointScalarField pEpsilonPEq_;
 
         //- Active yielding flag
         //     1.0 for active yielding
@@ -157,15 +154,13 @@ class linearElasticMisesPlasticThermalRelax
         //- plasticN surface field
         surfaceSymmTensorField plasticNf_;
 
-        //- plasticN point field
-        pointSymmTensorField pPlasticN_;
-
         //- An iterative procedure is used when the yield stress is a nonlinear
         //  function of plastic strain
         const bool nonLinearPlasticity_;
 
-        //- Solve pressure equation
-        const bool solvePressureEquation_;
+        //- Update bEbar consistently with the assumption that det(bEbar) == 1
+        //  defaults to off
+        const Switch updateBEbarConsistent_;
 
         //- Linear plastic modulus. It is only used if plasticity is linear,
         //  defined by two points on the stress-plastic strain curve
@@ -186,45 +181,32 @@ class linearElasticMisesPlasticThermalRelax
         //- Store sqrt(2/3) as it is used often
         static scalar sqrtTwoOverThree_;
 
-        volSymmTensorField epsilonTR_;
-
-        volScalarField DEpsilonTREq_;
-
-        volScalarField sigmaEqMoje_;
-
-        volSymmTensorField DEpsilonTR_;
-
-        dimensionedScalar C_;
-        dimensionedScalar n_;
-
 
     // Private Member Functions
 
         //- Disallow default bitwise copy construct
-        linearElasticMisesPlasticThermalRelax(const linearElasticMisesPlasticThermalRelax&);
+        neoHookeanElasticMisesPlasticThermalRelax(const neoHookeanElasticMisesPlasticThermalRelax&);
 
         //- Disallow default bitwise assignment
-        void operator=(const linearElasticMisesPlasticThermalRelax&);
+        void operator=(const neoHookeanElasticMisesPlasticThermalRelax&);
 
-        //- Update plasticN, DLambda, DSigmaY and sigmaY
-        void updatePlasticity
-        (
-            symmTensor& plasticN,          // Plastic return direction
-            scalar& DLambda,               // Plastic multiplier increment
-            scalar& DSigmaY,               // Increment of yield stress
-            scalar& sigmaY,                // Yield stress
-            const scalar sigmaYOld,        // Yield stress old time
-            const scalar fTrial,           // Trial yield function
-            const symmTensor& sTrial,      // Trial deviatoric stress
-            const scalar epsilonPEqOld,    // Old equivalent plastic strain
-            const scalar muBar,            // Scaled shear modulus
-            const scalar maxMagDEpsilon    // Max strain increment magnitude
-        ) const;
+        //- Make the J field
+        void makeJ();
 
-        //- Return the current yield stress
+        //- Return a reference to the J field
+        volScalarField& J();
+
+        //- Make the Jf field
+        void makeJf();
+
+        //- Return a reference to the Jf field
+        surfaceScalarField& Jf();
+
+        //- Return the current Kirchhoff yield stress
         scalar curYieldStress
         (
-            const scalar curEpsilonPEq    // Current equivalent plastic strain
+            const scalar curEpsilonPEq,    // Current equivalent plastic strain
+            const scalar J                 // Current Jacobian
         ) const;
 
         //- Evaulate current value of the yield function
@@ -233,7 +215,8 @@ class linearElasticMisesPlasticThermalRelax
             const scalar epsilonPEqOld,    // Old equivalent plastic strain
             const scalar magSTrial,        // Deviatoric trial stress magnitude
             const scalar DLambda,          // Plastic multiplier
-            const scalar muBar            // Scaled shear modulus
+            const scalar muBar,            // Scaled shear modulus
+            const scalar J                 // Current Jacobian
         ) const;
 
         //- Iteratively calculate plastic multiplier increment (DLambda)
@@ -245,28 +228,26 @@ class linearElasticMisesPlasticThermalRelax
             const scalar epsilonPEqOld,    // Old equivalent plastic strain
             const scalar magSTrial,        // Deviatoric trial stress magnitude
             const scalar muBar,            // Scaled shear modulus
+            const scalar J,                // Current Jacobian
             const scalar maxMagDEpsilon    // Max strain increment magnitude
         ) const;
 
-        //- Calculate hydrostatic component of the stress tensor
-        void calculateHydrostaticStress
+        //- Calcualte Ibar such that det(bEbar) == 1
+        tmp<volScalarField> Ibar
         (
-            volScalarField& sigmaHyd,
-            const volScalarField& trEpsilon
+            const volSymmTensorField& devBEbar
         );
 
-        //- Calculate hydrostatic component of the stress tensor
-        void calculateHydrostaticStress
+        //- Calcualte Ibar such that det(bEbar) == 1
+        tmp<surfaceScalarField> Ibar
         (
-            surfaceScalarField& sigmaHyd,
-            const surfaceScalarField& trEpsilon
+            const surfaceSymmTensorField& devBEbar
         );
-
 
 public:
 
     //- Runtime type information
-    TypeName("linearElasticMisesPlasticThermalRelax");
+    TypeName("neoHookeanElasticMisesPlasticThermalRelax");
 
     // Static data members
 
@@ -274,7 +255,7 @@ public:
     // Constructors
 
         //- Construct from dictionary
-        linearElasticMisesPlasticThermalRelax
+        neoHookeanElasticMisesPlasticThermalRelax
         (
             const word& name,
             const fvMesh& mesh,
@@ -285,52 +266,20 @@ public:
 
     // Destructor
 
-        virtual ~linearElasticMisesPlasticThermalRelax();
+        virtual ~neoHookeanElasticMisesPlasticThermalRelax();
 
 
     // Member Functions
-        virtual tmp<volScalarField> bulkModulus() const;
 
         //- Return the implicit stiffness
         //  This is the diffusivity for the Laplacian term
         virtual tmp<volScalarField> impK() const;
 
-#ifdef OPENFOAM_COM
-        //- Material tangent for Newton Raphson loop
-        virtual tmp<Field<scalarSquareMatrix>> materialTangentField() const;
-#endif
-
-        //- Return the implicit stiffness as a diagTensor
-#ifndef OPENFOAM_NOT_EXTEND
-        virtual tmp<volDiagTensorField> impKdiagTensor() const;
-#endif
-
         //- Update the stress
         virtual void correct(volSymmTensorField& sigma);
 
-        //- Calculate the stress surface field given gradD
-        void correct
-        (
-            surfaceSymmTensorField& sigma,
-            const surfaceTensorField& gradD
-        );
-
-        //- Calculate the stress surface field given the strain field
-        void correct
-        (
-            surfaceSymmTensorField& sigma,
-            const surfaceSymmTensorField& epsilon
-        );
-
         //- Update the stress surface field
         virtual void correct(surfaceSymmTensorField& sigma);
-
-        //- Update the stress point field
-        virtual void correct
-        (
-            pointSymmTensorField& sigma,
-            const pointTensorField& gradD
-        );
 
         //- Return material residual i.e. a measured of how convergence of
         //  the material model
@@ -341,6 +290,10 @@ public:
 
         //- Return the desired new time-step
         virtual scalar newDeltaT();
+
+        //- Set restart: some mechanical laws may change the writeOpt of fields
+        //  accordingly
+        virtual void setRestart();
 };
 
 

@@ -64,6 +64,7 @@ $(linGeomLaws)/anisotropicBiotElastic/anisotropicBiotElastic.C
 $(linGeomLaws)/linearElastic/linearElastic.C
 $(linGeomLaws)/linearElasticFromFile/linearElasticFromFile.C
 $(linGeomLaws)/linearElasticMisesPlastic/linearElasticMisesPlastic.C
+$(linGeomLaws)/linearElasticMisesPlasticThermalRelax/linearElasticMisesPlasticThermalRelax.C
 $(linGeomLaws)/linearElasticMohrCoulombPlastic/linearElasticMohrCoulombPlastic.C
 $(linGeomLaws)/orthotropicLinearElastic/orthotropicLinearElastic.C
 $(linGeomLaws)/poroMechanicalLaw/poroMechanicalLaw.C
@@ -79,6 +80,7 @@ $(nonLinGeomLaws)/OgdenElastic/OgdenElastic.C
 $(nonLinGeomLaws)/MooneyRivlinElastic/MooneyRivlinElastic.C
 $(nonLinGeomLaws)/neoHookeanElastic/neoHookeanElastic.C
 $(nonLinGeomLaws)/neoHookeanElasticMisesPlastic/neoHookeanElasticMisesPlastic.C
+$(nonLinGeomLaws)/neoHookeanElasticMisesPlasticThermalRelax/neoHookeanElasticMisesPlasticThermalRelax.C
 $(nonLinGeomLaws)/viscoBread/viscoBread.C
 $(nonLinGeomLaws)/viscoPlasticMy/viscoPlasticMy.C
 $(nonLinGeomLaws)/viscoPlasticRef/viscoPlasticRef.C
